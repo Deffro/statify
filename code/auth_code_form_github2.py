@@ -11,7 +11,13 @@ from flask_classful import FlaskView, route
 import pandas as pd
 import numpy as np
 
-app = Flask(__name__)
+server = Flask(__name__)
+
+app = Dash(
+    __name__,
+    server=server,
+    routes_pathname_prefix='/dash/'
+)
 
 #  Client Keys
 CLIENT_ID = '2490920ce5574a1a9b97a3e366c39dd3'
@@ -498,10 +504,12 @@ class SpotifyAPI(FlaskView):
         #
         # user_followed_artists_data_data.to_csv(f"{path}user_followed_artists_data_data.csv", index=False)
 
-        return render_template("index.html", sorted_array=user_profile_data)
+        return render_template("/dash/", sorted_array=user_profile_data)
 
 
-SpotifyAPI.register(app, route_base='/')
+SpotifyAPI.register(server, route_base='/')
+
+app.layout = html.Div("My Dash app")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=PORT)
+    app.run_server(debug=True, port=PORT)

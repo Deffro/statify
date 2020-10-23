@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block head %}
+    title
+{% endblock head %}
+
+{% block content %}
+    <h1>Profile Summarization</h1>
+    <audio
+        controls
+        src="https://p.scdn.co/mp3-preview/3a4f2a14cd2b60ac2de3e159a63da3004fe1546c?cid=2490920ce5574a1a9b97a3e366c39dd3">
+            Your browser does not support the
+            <code>audio</code> element.
+    </audio>
+    {% print sorted_array %}
+{% endblock content %}
+
+
