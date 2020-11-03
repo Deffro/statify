@@ -1,4 +1,0 @@
-name,followers,popularity,genres,image_url,external_url
-Iron Maiden,5721769,77,"['album rock', 'hard rock', 'metal', 'nwobhm', 'rock']",https://i.scdn.co/image/a6e9ed559db89eaa89de1684eea49547128d598a,https://api.spotify.com/v1/artists/6mdiAmATAx73kdxrNrnlao
-AC/DC,16467576,86,"['album rock', 'australian rock', 'hard rock', 'rock']",https://i.scdn.co/image/64d25927322389160df14e1966849040954b29bb,https://api.spotify.com/v1/artists/711MCceyCBcFnzjGY4Q7Un
-Foo Fighters,8020257,81,"['alternative metal', 'alternative rock', 'modern rock', 'permanent wave', 'post-grunge', 'rock']",https://i.scdn.co/image/c508060cb93f3d2f43ad0dc38602eebcbe39d16d,https://api.spotify.com/v1/artists/7jy3rLJdDQY21OgRLCZ9sD
