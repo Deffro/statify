@@ -12,13 +12,10 @@ from urllib.parse import quote
 from flask_classful import FlaskView, route
 import pandas as pd
 import numpy as np
-from app import main
-
-print('++++++ 1')
+from app_tabs import main, init_callbacks
 
 server = Flask(__name__)
-
-print('++++++ 2')
+server.secret_key = 'effro'
 
 #  Client Keys
 CLIENT_ID = '2490920ce5574a1a9b97a3e366c39dd3'
@@ -32,7 +29,7 @@ API_VERSION = "v1"
 SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
 
 # Server-side Parameters
-CLIENT_SIDE_URL = "http://0f30f76e991a.ngrok.io"  # "http://127.0.0.1"
+CLIENT_SIDE_URL = "http://5cc837a96d2d.ngrok.io"  # "http://127.0.0.1"
 PORT = 8080
 REDIRECT_URI = "{}/callback/q".format(CLIENT_SIDE_URL)
 SCOPE = "user-top-read user-follow-modify user-library-read playlist-read-private " \
@@ -348,7 +345,7 @@ def process_audio_features(data):
     danceability:     how suitable a track is for dancing based on tempo, rhythm stability, beat strength and overall
                       regularity. Median is about 0.65
     energy:           measure of intencity and activity based on dynamic range, perceived loudness, timbre, onset rate
-                      and general entropy. energetic tracks feel fast, loud and noisy
+                      and general entropy. energetic tracks feel fast, loud and noisy. Median is about 0.7
     acousticness:     confidence if the track is acoustic. median is 0
     instrumentalness: confidence if the track has no vocals. almost all values are 0
     liveness:         confidence if there is audience and so the track is live. median is 0.1
@@ -359,7 +356,7 @@ def process_audio_features(data):
                       and 0.66 describe tracks that may contain both music and speech, either in sections or layered,
                       including such cases as rap music. Values below 0.33 most likely represent music and other
                       non-speech-like tracks
-    valence:          musical positiveness conveyed by a track
+    valence:          musical positiveness conveyed by a track. Median about 0.45
     tempo:            the bpm
     """
     track_features = pd.DataFrame(
@@ -417,14 +414,12 @@ class SpotifyAPI(FlaskView):
         """
         Create authorization url and redirect to it
         """
-        print('+++++++3')
         url_args = "&".join(["{}={}".format(key, quote(val)) for key, val in self.get_auth_query_parameters().items()])
         auth_url = "{}/?{}".format(SPOTIFY_AUTH_URL, url_args)
         return redirect(auth_url)
 
     @route("/callback/q")
     def perform_auth(self):
-        print('+++++++4')
         # Requests refresh and access tokens
         auth_token = request.args['code']  # access the data from the GET (url)
         access_token_data = self.get_access_token_data(auth_token)
@@ -447,7 +442,7 @@ class SpotifyAPI(FlaskView):
         token = self.access_token
         expires = self.access_token_expires
         now = datetime.datetime.now()
-        print(expires)
+        print(f'Attemp to access server. Token expires at {expires}')
         if expires < now:
             self.perform_auth()
             return self.get_persistent_access_token()
@@ -553,7 +548,6 @@ class SpotifyAPI(FlaskView):
         return json.loads(r.text)
 
     def callback(self):
-        print('+++++++5')
         self.set_authorization_header()
 
         user_profile_data = self.get_profile_data()
@@ -568,7 +562,7 @@ class SpotifyAPI(FlaskView):
             self.get_all_user_top_artists_and_tracks(entity_type="artists", time_range="short_term")
 
         related_artists_total = pd.DataFrame()
-        for i, x in enumerate(user_top_artists_data_long_term['external_url'].head(20)):
+        for i, x in enumerate(user_top_artists_data_long_term['external_url'].head(10)):
             print(f'Getting related artists {i}')
             related_artists_json = self.get_related_artists(x.rsplit('/', 1)[-1])
             related_artists = process_related_artists(related_artists_json)
@@ -590,15 +584,14 @@ class SpotifyAPI(FlaskView):
             os.makedirs(path)
 
         users = pd.DataFrame(columns=['username', 'id', 'href', 'followers', 'accessed_at'])
-        users.loc[-1] =[user_profile_data['display_name'], user_profile_data['id'],
-                        user_profile_data['href'], user_profile_data['followers']['total'],
-                        datetime.datetime.now()]
+        users.loc[-1] = [user_profile_data['display_name'], user_profile_data['id'],
+                         user_profile_data['href'], user_profile_data['followers']['total'],
+                         datetime.datetime.now()]
+        session['user_id'] = user_profile_data['id']
         if not os.path.isfile('../data/users.csv'):
             users.to_csv('../data/users.csv', index=False)
         else:
             users.to_csv('../data/users.csv', index=False, mode='a', header=False)
-
-        print('+++++++6')
 
         user_saved_tracks_data.to_csv(f"{path}user_saved_tracks_data.csv", index=False)
 
@@ -645,8 +638,8 @@ def run_dash(app):
 SpotifyAPI.register(server, route_base='/')
 
 app = dash.Dash(name='app', server=server, url_base_pathname='/app/')
-app.layout = html.Div(['Initialized Layout'])
-
+app.layout = html.Div(['The URL should not contain the "/app/".'])
+init_callbacks(app)
 
 if __name__ == '__main__':
     server.run(debug=True, port=PORT)

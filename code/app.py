@@ -13,8 +13,6 @@ import dash_table
 # from server2 import app
 from flask import Flask, request, redirect, render_template, url_for, session
 
-print('+++++++7')
-app = dash.Dash(name='app', url_base_pathname='/app/')
 
 css_values = {
     'title_fontSize': '20px',
@@ -324,8 +322,8 @@ def plot_uncommon_or_mainstream_tracks(df):
     return fig
 
 
-def plot_artists_or_albums_with_most_saved_tracks(df):
-    fig = ff.create_table(df, height_constant=20, colorscale=[[0, '#1da843'], [.5, '#ffffff'], [1, '#ffffff']])
+def plot_artists_or_albums_with_most_saved_tracks(df, color):
+    fig = ff.create_table(df, height_constant=20, colorscale=[[0, color], [.5, '#ffffff'], [1, '#ffffff']])
     return fig
 
 
@@ -337,22 +335,22 @@ def plot_related_artists(df):
         style_as_list_view=True,
         style_header={
             'backgroundColor': '#ebaf0c', 'color': 'white',
-            'fontWeight': 'bold', 'fontSize': '20px'
+            'fontWeight': 'bold', 'fontSize': '19px', 'textAlign': 'left'
         },
         style_cell={
             'textAlign': 'left',
             'whiteSpace': 'normal',
-            'height': 'auto',
+            'minWidth': '40px', 'width': '120px', 'maxWidth': '150px',
         },
         style_cell_conditional=[
             {'if': {'column_id': 'Artist'},
-             'width': '30%'},
-            {'if': {'column_id': 'Followers'},
-             'width': '15%'},
+             'width': '120px'},
+            # {'if': {'column_id': 'Followers'},
+            #  'width': '15%'},
             {'if': {'column_id': 'Popularity'},
-             'width': '15%'},
+             'width': '140px'},
             {'if': {'column_id': 'Genres'},
-             'width': '50px'},
+             'width': '150px'},
         ],
         style_data_conditional=[
             {
@@ -362,192 +360,11 @@ def plot_related_artists(df):
         ],
         page_action='none',
         fixed_rows={'headers': True},
-        style_table={'height': '300px', 'overflowY': 'auto', 'overflowX': 'auto', 'textAlign': 'left'},
+        style_table={'height': '300px', 'overflowX': 'auto'},
         sort_action='native',
         filter_action='native',
         columns=[{"name": i, "id": i} for i in df.columns],
         data=df.to_dict('records'),
-    )
-    return fig
-
-
-@app.callback(Output('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children'),
-              [Input('scatter_polar_energy_track_number', 'value')])
-def intermediate_get_user_all_tracks_with_audio_features_for_scatter_polar(value):
-    users = pd.read_csv('../data/users.csv')
-    user_id = users.iloc[-1]['id']
-    user_top_tracks_data_long_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_long_term.csv')
-    user_top_tracks_data_medium_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_medium_term.csv')
-    user_top_tracks_data_short_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_short_term.csv')
-    user_saved_tracks = pd.read_csv(f'../data/{user_id}/user_saved_tracks_data.csv')
-    if user_saved_tracks.shape[0] > 0:
-        user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
-                                     user_top_tracks_data_short_term, user_saved_tracks])
-    else:
-        user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
-                                     user_top_tracks_data_short_term])
-    user_all_tracks = user_all_tracks.drop_duplicates(subset=['song_external_url'])
-    audio_features = pd.read_csv(f'../data/{user_id}/user_tracks_audio_features.csv')
-    audio_features['song_external_url'] = audio_features['track_id'].apply(
-        lambda x: f'https://open.spotify.com/track/{x}')
-    user_all_tracks_with_audio_features = user_all_tracks.merge(audio_features, on='song_external_url', how='inner')
-    return user_all_tracks_with_audio_features.head(value).to_json()
-
-
-@app.callback(Output('scatter_polar_energy', 'figure'),
-              [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
-def plot_scatter_polar_energy(data):
-    data = pd.read_json(data)
-    feat = 'energy'
-    fig = px.scatter_polar(data, r=feat, theta='song_name',
-                           color='artist_name',
-                           hover_name='artist_name',
-                           opacity=0.7)
-    fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
-    return fig
-
-
-@app.callback(Output('scatter_polar_danceability', 'figure'),
-              [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
-def plot_scatter_polar_danceability(data):
-    data = pd.read_json(data)
-    feat = 'danceability'
-    fig = px.scatter_polar(data, r=feat, theta='song_name',
-                           color='artist_name',
-                           hover_name='artist_name',
-                           opacity=0.7)
-    fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
-    return fig
-
-
-@app.callback(Output('scatter_polar_loudness', 'figure'),
-              [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
-def plot_scatter_polar_loudness(data):
-    data = pd.read_json(data)
-    feat = 'loudness'
-    fig = px.scatter_polar(data, r=feat, theta='song_name',
-                           color='artist_name',
-                           hover_name='artist_name',
-                           opacity=0.7)
-    fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
-    return fig
-
-
-@app.callback(Output('scatter_polar_speechiness', 'figure'),
-              [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
-def plot_scatter_polar_speechiness(data):
-    data = pd.read_json(data)
-    feat = 'speechiness'
-    fig = px.scatter_polar(data, r=feat, theta='song_name',
-                           color='artist_name',
-                           hover_name='artist_name',
-                           opacity=0.7)
-    fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
-    return fig
-
-
-@app.callback(Output('scatter_polar_acousticness', 'figure'),
-              [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
-def plot_scatter_polar_acousticness(data):
-    data = pd.read_json(data)
-    feat = 'acousticness'
-    fig = px.scatter_polar(data, r=feat, theta='song_name',
-                           color='artist_name',
-                           hover_name='artist_name',
-                           opacity=0.7)
-    fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
-    return fig
-
-
-@app.callback(Output('scatter_polar_instrumentalness', 'figure'),
-              [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
-def plot_scatter_polar_instrumentalness(data):
-    data = pd.read_json(data)
-    feat = 'instrumentalness'
-    fig = px.scatter_polar(data, r=feat, theta='song_name',
-                           color='artist_name',
-                           hover_name='artist_name',
-                           opacity=0.7)
-    fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
-    return fig
-
-
-@app.callback(Output('scatter_polar_liveness', 'figure'),
-              [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
-def plot_scatter_polar_liveness(data):
-    data = pd.read_json(data)
-    feat = 'liveness'
-    fig = px.scatter_polar(data, r=feat, theta='song_name',
-                           color='artist_name',
-                           hover_name='artist_name',
-                           opacity=0.7)
-    fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
-    return fig
-
-
-@app.callback(Output('scatter_polar_valence', 'figure'),
-              [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
-def plot_scatter_polar_valence(data):
-    data = pd.read_json(data)
-    feat = 'valence'
-    fig = px.scatter_polar(data, r=feat, theta='song_name',
-                           color='artist_name',
-                           hover_name='artist_name',
-                           opacity=0.7)
-    fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
-    return fig
-
-
-@app.callback(Output('spider-track', 'figure'),
-              [Input('spider-track-dropdown1', 'value'),
-               Input('spider-track-dropdown2', 'value')])
-def plot_scatter_polar_valence(value1, value2):
-    feats = ['danceability', 'energy', 'speechiness', 'instrumentalness', 'liveness', 'acousticness', 'valence']
-    users = pd.read_csv('../data/users.csv')
-    user_id = users.iloc[-1]['id']
-    user_top_tracks_data_long_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_long_term.csv')
-    user_top_tracks_data_medium_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_medium_term.csv')
-    user_top_tracks_data_short_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_short_term.csv')
-    user_saved_tracks = pd.read_csv(f'../data/{user_id}/user_saved_tracks_data.csv')
-    if user_saved_tracks.shape[0] > 0:
-        user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
-                                     user_top_tracks_data_short_term, user_saved_tracks])
-    else:
-        user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
-                                     user_top_tracks_data_short_term])
-    user_all_tracks = user_all_tracks.drop_duplicates(subset=['song_external_url'])
-    audio_features = pd.read_csv(f'../data/{user_id}/user_tracks_audio_features.csv')
-    audio_features['song_external_url'] = audio_features['track_id'].apply(
-        lambda x: f'https://open.spotify.com/track/{x}')
-    user_all_tracks_with_audio_features = user_all_tracks.merge(audio_features, on='song_external_url', how='inner')
-    user_all_tracks_with_audio_features1 = user_all_tracks_with_audio_features. \
-        loc[user_all_tracks_with_audio_features['song_external_url'] == value1]
-    user_all_tracks_with_audio_features2 = user_all_tracks_with_audio_features. \
-        loc[user_all_tracks_with_audio_features['song_external_url'] == value2]
-
-    df1 = pd.DataFrame(dict(
-        r=user_all_tracks_with_audio_features1[feats].values[0],
-        theta=feats
-    ))
-    df2 = pd.DataFrame(dict(
-        r=user_all_tracks_with_audio_features2[feats].values[0],
-        theta=feats
-    ))
-    fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(r=df1['r'], theta=df1['theta'], fill='toself', opacity=0.5,
-                                  name=f"{user_all_tracks_with_audio_features1['song_name'].values[0]} by "
-                                       f"{user_all_tracks_with_audio_features1['artist_name'].values[0]}"))
-    fig.add_trace(go.Scatterpolar(r=df2['r'], theta=df2['theta'], fill='toself', opacity=0.5,
-                                  name=f"{user_all_tracks_with_audio_features2['song_name'].values[0]} by "
-                                       f"{user_all_tracks_with_audio_features2['artist_name'].values[0]}"))
-    fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True
-            ),
-        ),
-        legend=dict(font=dict(size=8)),
-        showlegend=True,
     )
     return fig
 
@@ -572,28 +389,29 @@ def plot_for_musicians(data):
         style_as_list_view=True,
         style_header={
             'backgroundColor': '#ba2318', 'color': 'white',
-            'fontWeight': 'bold', 'fontSize': '20px'
+            'fontWeight': 'bold', 'fontSize': '19px', 'textAlign': 'left'
         },
         style_cell={
-            'textAlign': 'left',
-            'whiteSpace': 'normal',
-            'height': 'auto',
+            # 'textAlign': 'left',
+            # 'whiteSpace': 'normal',
+            # 'height': 'auto',
+            'minWidth': '40px', 'width': '120px', 'maxWidth': '150px',
+            'overflow': 'hidden',
+            'textOverflow': 'ellipsis',
         },
         style_cell_conditional=[
             {'if': {'column_id': 'Track'},
-             'width': '50px', 'textAlign': 'left'},
+             'textAlign': 'left'},
             {'if': {'column_id': 'Artist'},
-             'width': '15%', 'textAlign': 'left'},
+             'textAlign': 'left'},
             {'if': {'column_id': 'Key'},
-             'width': '8%', 'textAlign': 'right'},
+             'textAlign': 'left', 'width': '55px'},
             {'if': {'column_id': 'Scale'},
-             'width': '10%', 'textAlign': 'right'},
+             'textAlign': 'left', 'width': '75px'},
             {'if': {'column_id': 'Beats/Bar'},
-             'width': '16%', 'textAlign': 'right'},
+             'textAlign': 'center'},
             {'if': {'column_id': 'Bpm'},
-             'width': '9%', 'textAlign': 'right'},
-            {'if': {'column_id': 'Duration'},
-             'width': '15%', 'textAlign': 'right'},
+             'textAlign': 'right', 'width': '55px'},
         ],
         style_data_conditional=[
             {
@@ -603,7 +421,7 @@ def plot_for_musicians(data):
         ],
         page_action='none',
         fixed_rows={'headers': True},
-        style_table={'height': '300px', 'overflowY': 'auto', 'overflowX': 'auto', 'textAlign': 'left'},
+        style_table={'overflowX': 'auto'},
         sort_action='native',
         filter_action='native',
         columns=[{"name": i, "id": i} for i in data.columns],
@@ -612,10 +430,193 @@ def plot_for_musicians(data):
     return fig
 
 
+def init_callbacks(dash_app):
+    @dash_app.callback(Output('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children'),
+                  [Input('scatter_polar_energy_track_number', 'value')])
+    def intermediate_get_user_all_tracks_with_audio_features_for_scatter_polar(value):
+        if __name__ == '__main__':
+            users = pd.read_csv('../data/users.csv')
+            user_id = users.iloc[-1]['id']
+        else:
+            user_id = session['user_id']
+
+        user_top_tracks_data_long_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_long_term.csv')
+        user_top_tracks_data_medium_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_medium_term.csv')
+        user_top_tracks_data_short_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_short_term.csv')
+        user_saved_tracks = pd.read_csv(f'../data/{user_id}/user_saved_tracks_data.csv')
+        if user_saved_tracks.shape[0] > 0:
+            user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
+                                         user_top_tracks_data_short_term, user_saved_tracks])
+        else:
+            user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
+                                         user_top_tracks_data_short_term])
+        user_all_tracks = user_all_tracks.drop_duplicates(subset=['song_external_url'])
+        audio_features = pd.read_csv(f'../data/{user_id}/user_tracks_audio_features.csv')
+        audio_features['song_external_url'] = audio_features['track_id'].apply(
+            lambda x: f'https://open.spotify.com/track/{x}')
+        user_all_tracks_with_audio_features = user_all_tracks.merge(audio_features, on='song_external_url', how='inner')
+        return user_all_tracks_with_audio_features.head(value).to_json()
+
+    @dash_app.callback(Output('scatter_polar_energy', 'figure'),
+                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+    def plot_scatter_polar_energy(data):
+        data = pd.read_json(data)
+        feat = 'energy'
+        fig = px.scatter_polar(data, r=feat, theta='song_name',
+                               color='artist_name',
+                               hover_name='artist_name',
+                               opacity=0.7)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        return fig
+
+    @dash_app.callback(Output('scatter_polar_danceability', 'figure'),
+                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+    def plot_scatter_polar_danceability(data):
+        data = pd.read_json(data)
+        feat = 'danceability'
+        fig = px.scatter_polar(data, r=feat, theta='song_name',
+                               color='artist_name',
+                               hover_name='artist_name',
+                               opacity=0.7)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        return fig
+
+    @dash_app.callback(Output('scatter_polar_loudness', 'figure'),
+                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+    def plot_scatter_polar_loudness(data):
+        data = pd.read_json(data)
+        feat = 'loudness'
+        fig = px.scatter_polar(data, r=feat, theta='song_name',
+                               color='artist_name',
+                               hover_name='artist_name',
+                               opacity=0.7)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        return fig
+
+    @dash_app.callback(Output('scatter_polar_speechiness', 'figure'),
+                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+    def plot_scatter_polar_speechiness(data):
+        data = pd.read_json(data)
+        feat = 'speechiness'
+        fig = px.scatter_polar(data, r=feat, theta='song_name',
+                               color='artist_name',
+                               hover_name='artist_name',
+                               opacity=0.7)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        return fig
+
+    @dash_app.callback(Output('scatter_polar_acousticness', 'figure'),
+                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+    def plot_scatter_polar_acousticness(data):
+        data = pd.read_json(data)
+        feat = 'acousticness'
+        fig = px.scatter_polar(data, r=feat, theta='song_name',
+                               color='artist_name',
+                               hover_name='artist_name',
+                               opacity=0.7)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        return fig
+
+    @dash_app.callback(Output('scatter_polar_instrumentalness', 'figure'),
+                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+    def plot_scatter_polar_instrumentalness(data):
+        data = pd.read_json(data)
+        feat = 'instrumentalness'
+        fig = px.scatter_polar(data, r=feat, theta='song_name',
+                               color='artist_name',
+                               hover_name='artist_name',
+                               opacity=0.7)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        return fig
+
+    @dash_app.callback(Output('scatter_polar_liveness', 'figure'),
+                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+    def plot_scatter_polar_liveness(data):
+        data = pd.read_json(data)
+        feat = 'liveness'
+        fig = px.scatter_polar(data, r=feat, theta='song_name',
+                               color='artist_name',
+                               hover_name='artist_name',
+                               opacity=0.7)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        return fig
+
+    @dash_app.callback(Output('scatter_polar_valence', 'figure'),
+                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+    def plot_scatter_polar_valence(data):
+        data = pd.read_json(data)
+        feat = 'valence'
+        fig = px.scatter_polar(data, r=feat, theta='song_name',
+                               color='artist_name',
+                               hover_name='artist_name',
+                               opacity=0.7)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        return fig
+
+    @dash_app.callback(Output('spider-track', 'figure'),
+                  [Input('spider-track-dropdown1', 'value'),
+                   Input('spider-track-dropdown2', 'value')])
+    def plot_spider_track(value1, value2):
+        feats = ['danceability', 'energy', 'speechiness', 'instrumentalness', 'liveness', 'acousticness', 'valence']
+        if __name__ == '__main__':
+            users = pd.read_csv('../data/users.csv')
+            user_id = users.iloc[-1]['id']
+        else:
+            user_id = session['user_id']
+        user_top_tracks_data_long_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_long_term.csv')
+        user_top_tracks_data_medium_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_medium_term.csv')
+        user_top_tracks_data_short_term = pd.read_csv(f'../data/{user_id}/user_top_tracks_data_short_term.csv')
+        user_saved_tracks = pd.read_csv(f'../data/{user_id}/user_saved_tracks_data.csv')
+        if user_saved_tracks.shape[0] > 0:
+            user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
+                                         user_top_tracks_data_short_term, user_saved_tracks])
+        else:
+            user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
+                                         user_top_tracks_data_short_term])
+        user_all_tracks = user_all_tracks.drop_duplicates(subset=['song_external_url'])
+        audio_features = pd.read_csv(f'../data/{user_id}/user_tracks_audio_features.csv')
+        audio_features['song_external_url'] = audio_features['track_id'].apply(
+            lambda x: f'https://open.spotify.com/track/{x}')
+        user_all_tracks_with_audio_features = user_all_tracks.merge(audio_features, on='song_external_url', how='inner')
+        user_all_tracks_with_audio_features1 = user_all_tracks_with_audio_features. \
+            loc[user_all_tracks_with_audio_features['song_external_url'] == value1]
+        user_all_tracks_with_audio_features2 = user_all_tracks_with_audio_features. \
+            loc[user_all_tracks_with_audio_features['song_external_url'] == value2]
+
+        df1 = pd.DataFrame(dict(
+            r=user_all_tracks_with_audio_features1[feats].values[0],
+            theta=feats
+        ))
+        df2 = pd.DataFrame(dict(
+            r=user_all_tracks_with_audio_features2[feats].values[0],
+            theta=feats
+        ))
+        fig = go.Figure()
+        fig.add_trace(go.Scatterpolar(r=df1['r'], theta=df1['theta'], fill='toself', opacity=0.5,
+                                      name=f"{user_all_tracks_with_audio_features1['song_name'].values[0]} by "
+                                           f"{user_all_tracks_with_audio_features1['artist_name'].values[0]}"))
+        fig.add_trace(go.Scatterpolar(r=df2['r'], theta=df2['theta'], fill='toself', opacity=0.5,
+                                      name=f"{user_all_tracks_with_audio_features2['song_name'].values[0]} by "
+                                           f"{user_all_tracks_with_audio_features2['artist_name'].values[0]}"))
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True
+                ),
+            ),
+            legend=dict(font=dict(size=8)),
+            showlegend=True,
+        )
+        return fig
+
+
 def main():
-    users = pd.read_csv('../data/users.csv')
-    user_id = users.iloc[-1]['id']
-    print('--------', user_id, '--------')
+    if __name__ == '__main__':
+        users = pd.read_csv('../data/users.csv')
+        user_id = users.iloc[-1]['id']
+    else:
+        user_id = session['user_id']
+    print(f'+++ User {user_id} just accessed the app.')
 
     # First read all data
     user_top_artists_data_long_term = pd.read_csv(f'../data/{user_id}/user_top_artists_data_long_term.csv')
@@ -651,11 +652,29 @@ def main():
     else:
         user_all_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
                                      user_top_tracks_data_short_term])
-    user_all_tracks = user_all_tracks.drop_duplicates(subset=['song_external_url'])
+    user_all_tracks = user_all_tracks.drop_duplicates(subset=['song_name', 'artist_name'])
 
     audio_features['song_external_url'] = audio_features['track_id'].apply(
         lambda x: f'https://open.spotify.com/track/{x}')
     user_all_tracks_with_audio_features = user_all_tracks.merge(audio_features, on='song_external_url', how='inner')
+    user_all_tracks_with_audio_features['energy'] = user_all_tracks_with_audio_features['energy'].apply(
+        lambda x: np.round(x, 4))
+    user_all_tracks_with_audio_features['loudness'] = user_all_tracks_with_audio_features['loudness'].apply(
+        lambda x: np.round(x, 3))
+    user_all_tracks_with_audio_features['acousticness'] = user_all_tracks_with_audio_features['acousticness'].apply(
+        lambda x: np.round(x, 3))
+    user_all_tracks_with_audio_features['instrumentalness'] = user_all_tracks_with_audio_features['instrumentalness'].apply(
+        lambda x: np.round(x, 3))
+    user_all_tracks_with_audio_features['speechiness'] = user_all_tracks_with_audio_features['speechiness'].apply(
+        lambda x: np.round(x, 3))
+    user_all_tracks_with_audio_features['liveness'] = user_all_tracks_with_audio_features['liveness'].apply(
+        lambda x: np.round(x, 3))
+    user_all_tracks_with_audio_features['valence'] = user_all_tracks_with_audio_features['valence'].apply(
+        lambda x: np.round(x, 3))
+    user_all_tracks_with_audio_features['danceability'] = user_all_tracks_with_audio_features['danceability'].apply(
+        lambda x: np.round(x, 3))
+    user_all_tracks_with_audio_features['song_name_url'] = user_all_tracks_with_audio_features. \
+        apply(lambda x: f'<a href="{x["song_external_url"]}">{x["song_name"]}</a>', axis=1)
 
     user_top_tracks_data_long_term['song_duration_sec'] = user_top_tracks_data_long_term['song_duration']. \
         apply(lambda x: int(x.split(':')[0]) * 60 + int(x.split(':')[1]))
@@ -692,6 +711,62 @@ def main():
                                                               'index': 'Songs Saved'})[['Artist', 'Songs Saved']]
         top_saved_albums = top_saved_albums.rename(columns={'album_name_url': 'Album',
                                                             'index': 'Songs Saved'})[['Album', 'Songs Saved']]
+        top_energy = user_all_tracks_with_audio_features.sort_values(by='energy', ascending=False).head(5)
+        top_energy = top_energy.rename(columns={'song_name_url': 'Track', 'energy': 'Energy',
+                                                'artist_name': 'Artist'})[['Track', 'Artist', 'Energy']]
+        bot_energy = user_all_tracks_with_audio_features.sort_values(by='energy', ascending=True).head(5)
+        bot_energy = bot_energy.rename(columns={'song_name_url': 'Track', 'energy': 'Energy',
+                                                'artist_name': 'Artist'})[['Track', 'Artist', 'Energy']]
+        top_valence = user_all_tracks_with_audio_features.sort_values(by='valence', ascending=False).head(5)
+        top_valence = top_valence.rename(columns={'song_name_url': 'Track', 'valence': 'Valence',
+                                                  'artist_name': 'Artist'})[['Track', 'Artist', 'Valence']]
+        bot_valence = user_all_tracks_with_audio_features.sort_values(by='valence', ascending=True).head(5)
+        bot_valence = bot_valence.rename(columns={'song_name_url': 'Track', 'valence': 'Valence',
+                                                  'artist_name': 'Artist'})[['Track', 'Artist', 'Valence']]
+        top_loudness = user_all_tracks_with_audio_features.sort_values(by='loudness', ascending=False).head(5)
+        top_loudness = top_loudness.rename(columns={'song_name_url': 'Track', 'loudness': 'Loudness',
+                                                    'artist_name': 'Artist'})[['Track', 'Artist', 'Loudness']]
+        bot_loudness = user_all_tracks_with_audio_features.sort_values(by='loudness', ascending=True).head(5)
+        bot_loudness = bot_loudness.rename(columns={'song_name_url': 'Track', 'loudness': 'Loudness',
+                                                    'artist_name': 'Artist'})[['Track', 'Artist', 'Loudness']]
+        top_danceability = user_all_tracks_with_audio_features.sort_values(by='danceability', ascending=False).head(5)
+        top_danceability = top_danceability.rename(columns={
+            'song_name_url': 'Track', 'danceability': 'Danceability',
+            'artist_name': 'Artist'})[['Track', 'Artist', 'Danceability']]
+        bot_danceability = user_all_tracks_with_audio_features.sort_values(by='danceability', ascending=True).head(5)
+        bot_danceability = bot_danceability.rename(columns={
+            'song_name_url': 'Track', 'danceability': 'Danceability',
+            'artist_name': 'Artist'})[['Track', 'Artist', 'Danceability']]
+        top_acousticness = user_all_tracks_with_audio_features.sort_values(by='acousticness', ascending=False).head(5)
+        top_acousticness = top_acousticness.rename(columns={
+            'song_name_url': 'Track', 'acousticness': 'Acousticness',
+            'artist_name': 'Artist'})[['Track', 'Artist', 'Acousticness']]
+        bot_acousticness = user_all_tracks_with_audio_features.sort_values(by='acousticness', ascending=True).head(5)
+        bot_acousticness = bot_acousticness.rename(columns={
+            'song_name_url': 'Track', 'acousticness': 'Acousticness',
+            'artist_name': 'Artist'})[['Track', 'Artist', 'Acousticness']]
+        top_instrumentalness = user_all_tracks_with_audio_features.sort_values(by='instrumentalness',
+                                                                               ascending=False).head(5)
+        top_instrumentalness = top_instrumentalness.rename(columns={
+            'song_name_url': 'Track', 'instrumentalness': 'Instrumental',
+            'artist_name': 'Artist'})[['Track', 'Artist', 'Instrumental']]
+        bot_instrumentalness = user_all_tracks_with_audio_features.sort_values(by='instrumentalness',
+                                                                               ascending=True).head(5)
+        bot_instrumentalness = bot_instrumentalness.rename(columns={
+            'song_name_url': 'Track', 'instrumentalness': 'Instrumental',
+            'artist_name': 'Artist'})[['Track', 'Artist', 'Instrumental']]
+        top_speechiness = user_all_tracks_with_audio_features.sort_values(by='speechiness', ascending=False).head(5)
+        top_speechiness = top_speechiness.rename(columns={'song_name_url': 'Track', 'speechiness': 'Speechiness',
+                                                          'artist_name': 'Artist'})[['Track', 'Artist', 'Speechiness']]
+        bot_speechiness = user_all_tracks_with_audio_features.sort_values(by='speechiness', ascending=True).head(5)
+        bot_speechiness = bot_speechiness.rename(columns={'song_name_url': 'Track', 'speechiness': 'Speechiness',
+                                                          'artist_name': 'Artist'})[['Track', 'Artist', 'Speechiness']]
+        top_liveness = user_all_tracks_with_audio_features.sort_values(by='liveness', ascending=False).head(5)
+        top_liveness = top_liveness.rename(columns={'song_name_url': 'Track', 'liveness': 'Liveness',
+                                                    'artist_name': 'Artist'})[['Track', 'Artist', 'Liveness']]
+        bot_liveness = user_all_tracks_with_audio_features.sort_values(by='liveness', ascending=True).head(5)
+        bot_liveness = bot_liveness.rename(columns={'song_name_url': 'Track', 'liveness': 'Liveness',
+                                                    'artist_name': 'Artist'})[['Track', 'Artist', 'Liveness']]
 
     related_artists_suggestions = related_artists.loc[~related_artists['external_url'].isin(
         user_top_artists_data_long_term['external_url'].unique())]
@@ -829,7 +904,7 @@ def main():
                     ],
                         style={'textAlign': 'center', 'fontFamily': 'helvetica'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_saved_artists))
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_saved_artists, '#1da843'))
                 ],
                     style={'width': '49.5%', 'display': 'inline-block', 'float': 'left'}
                 ),
@@ -840,7 +915,7 @@ def main():
                     ],
                         style={'textAlign': 'center', 'fontFamily': 'helvetica'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_saved_albums))
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_saved_albums, '#1da843'))
                 ],
                     style={'width': '49.5%', 'display': 'inline-block', 'float': 'right'}
                 ),
@@ -902,6 +977,13 @@ def main():
                 style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
                        'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
                        'marginTop': '60px', 'marginBottom': '0px'}
+            ),
+            html.Div([
+                "Click on a genre name to expand it and see the artists related to it."
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
+                       'marginBottom': '0px'}
             ),
 
             html.Div([
@@ -1010,8 +1092,9 @@ def main():
                 html.Br(),
                 html.B('Liveness'), ": confidence if there is audience and so the track is live",
                 html.Br(),
-                "On the drowdown select the number of tracks to be displayed in each of the 8 plots. For big numbers "
-                "you might wait a few seconds for the new plots to be creates. You can zoom "
+                "On the drowdown select the number of tracks to be displayed in each of the 8 plots.",
+                html.B('For big numbers you might wait up to 30 seconds for the new plots to be created.'),
+                "You can zoom "
                 "in the plot by clicking and dragging. You can play with the artists on the right. You can even "
                 "rotate the plot by putting the mouse right outside of the circle."
 
@@ -1046,75 +1129,314 @@ def main():
         ),
 
         html.Div([
-            generate_table_top_tracks(user_top_tracks_across_periods, colors_last_mo_tracks, colors_6_mo_tracks),
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'right'}
-        ),
 
-        html.Div([
-            'Audio Characteristics Comparison'
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                   'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                   'marginTop': '30px', 'marginBottom': '0px'}
-        ),
-        html.Div([
-            "1 vs 1 Comparison of two of your Tracks on 7 audio characteristics. You can select the two tracks "
-            "from the two dropdowns. You can zoom on the plot by clicking and dragging. You can click on a track "
-            "on the right of the plot to remove it."
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                   'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
-                   'marginBottom': '0px'}
-        ),
+            html.Div([
+                generate_table_top_tracks(user_top_tracks_across_periods, colors_last_mo_tracks, colors_6_mo_tracks),
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
+            ),
 
-        html.Div([
-            dcc.Dropdown(id='spider-track-dropdown1',
-                         options=[{'label': f'Artist: {row[1]}, Track: {row[0]}', 'value': row[2]}
-                                  for row in user_all_tracks[['song_name', 'artist_name', 'song_external_url']].
-                                  sort_values(by=['artist_name', 'song_name']).values],
-                         value=user_all_tracks.iloc[0]['song_external_url'],
-                         placeholder="Select a track"),
-            dcc.Dropdown(id='spider-track-dropdown2',
-                         options=[{'label': f'Artist: {row[1]}, Track: {row[0]}', 'value': row[2]}
-                                  for row in user_all_tracks[['song_name', 'artist_name', 'song_external_url']].
-                                  sort_values(by=['artist_name', 'song_name']).values],
-                         value=user_all_tracks.iloc[1]['song_external_url'],
-                         placeholder="Select another track"),
-            dcc.Graph(id='spider-track'),
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'right'}
-        ),
+            html.Div([
+                'Audio Characteristics Comparison'
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                       'marginTop': '30px', 'marginBottom': '0px'}
+            ),
+            html.Div([
+                "1 vs 1 Comparison of two of your Tracks on 7 audio characteristics. You can select the two tracks "
+                "from the two dropdowns. You can zoom on the plot by clicking and dragging. You can click on a track "
+                "on the right of the plot to remove it."
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
+                       'marginBottom': '0px'}
+            ),
 
-        html.Div([
-            'For musicians'
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                   'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                   'marginTop': '30px', 'marginBottom': '0px'}
-        ),
-        html.Div([
-            "Filter and sort columns by your liking. For example enter '3' in Beats/Bar, '>145' in "
-            "Bpm and 'minor' in Scale and press enter. Duration is in milliseconds."
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                   'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
-                   'marginBottom': '0px'}
-        ),
+            html.Div([
+                dcc.Dropdown(id='spider-track-dropdown1',
+                             options=[{'label': f'Artist: {row[1]}, Track: {row[0]}', 'value': row[2]}
+                                      for row in user_all_tracks[['song_name', 'artist_name', 'song_external_url']].
+                                      sort_values(by=['artist_name', 'song_name']).values],
+                             value=user_all_tracks.iloc[0]['song_external_url'],
+                             placeholder="Select a track"),
+                dcc.Dropdown(id='spider-track-dropdown2',
+                             options=[{'label': f'Artist: {row[1]}, Track: {row[0]}', 'value': row[2]}
+                                      for row in user_all_tracks[['song_name', 'artist_name', 'song_external_url']].
+                                      sort_values(by=['artist_name', 'song_name']).values],
+                             value=user_all_tracks.iloc[1]['song_external_url'],
+                             placeholder="Select another track"),
+                dcc.Graph(id='spider-track'),
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
+            ),
 
-        html.Div([
-            plot_for_musicians(user_all_tracks_with_audio_features)
+            html.Div([
+                'For musicians'
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                       'marginTop': '30px', 'marginBottom': '0px'}
+            ),
+            html.Div([
+                "Filter and sort columns by your liking. For example enter '3' in Beats/Bar, '>145' in "
+                "Bpm and 'minor' in Scale and press enter. Duration is in milliseconds."
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
+                       'marginBottom': '0px'}
+            ),
+
+            html.Div([
+                plot_for_musicians(user_all_tracks_with_audio_features)
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
+            ),
+
+            html.Div([
+                'Top/Low 5 tracks on each Audio Characteristic'
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                       'marginTop': '30px', 'marginBottom': '30px'}
+            ),
+
+            html.Div([
+
+                html.Div([
+                    html.Div([
+                        'Top 5 Energy'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_energy, '#d1701b'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'left'}
+                ),
+
+                html.Div([
+                    html.Div([
+                        'Low 5 Energy'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_energy, '#d1701b'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'right'}
+                ),
+
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+            ),
+
+            html.Div([
+
+                html.Div([
+                    html.Div([
+                        'Top 5 Valence'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_valence, '#037010'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
+                           'marginTop': '30px'}
+                ),
+
+                html.Div([
+                    html.Div([
+                        'Low 5 Valence'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_valence, '#037010'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                ),
+
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+            ),
+
+            html.Div([
+
+                html.Div([
+                    html.Div([
+                        'Top 5 Loudness'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_loudness, '#324034'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
+                           'marginTop': '30px'}
+                ),
+
+                html.Div([
+                    html.Div([
+                        'Low 5 Loudness'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_loudness, '#324034'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                ),
+
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+            ),
+
+            html.Div([
+
+                html.Div([
+                    html.Div([
+                        'Top 5 Danceability'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_danceability, '#b4cc14'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
+                           'marginTop': '30px'}
+                ),
+
+                html.Div([
+                    html.Div([
+                        'Low 5 Danceability'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_danceability, '#b4cc14'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                ),
+
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+            ),
+
+            html.Div([
+
+                html.Div([
+                    html.Div([
+                        'Top 5 Acousticness'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_acousticness, '#1b4f8f'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
+                           'marginTop': '30px'}
+                ),
+
+                html.Div([
+                    html.Div([
+                        'Low 5 Acousticness'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_acousticness, '#1b4f8f'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                ),
+
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+            ),
+
+            html.Div([
+                html.Div([
+                    'Top 5 Instrumentalness'
+                ],
+                    style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                ),
+                dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_instrumentalness, '#9c0000'))
+            ],
+                style={'width': '50%', 'display': 'inline-block', 'float': 'left',
+                       'marginTop': '30px'}
+            ),
+
+            html.Div([
+                html.Div([
+                    'Low 5 Instrumentalness'
+                ],
+                    style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                ),
+                dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_instrumentalness, '#9c0000'))
+            ],
+                style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+            ),
+
+            html.Div([
+
+                html.Div([
+                    html.Div([
+                        'Top 5 Speechiness'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_speechiness, '#4f1d82'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
+                           'marginTop': '30px'}
+                ),
+
+                html.Div([
+                    html.Div([
+                        'Low 5 Speechiness'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_speechiness, '#4f1d82'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                ),
+
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+            ),
+
+            html.Div([
+
+                html.Div([
+                    html.Div([
+                        'Top 5 Liveness'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_liveness, '#41db2a'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
+                           'marginTop': '30px'}
+                ),
+
+                html.Div([
+                    html.Div([
+                        'Low 5 Liveness'
+                    ],
+                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                    ),
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_liveness, '#41db2a'))
+                ],
+                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                ),
+
+            ],
+                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+            ),
+
         ],
             style={'width': '40%', 'display': 'inline-block', 'float': 'right'}
         )
-
     ],
     )
 
     return layout
 
 
-# if __name__ == '__main__':
-# if the script is run standalone then the user_id is the last user that authorized. His file must exist.
-app.layout = main()
-app.run_server(debug=True, port=8080)
+if __name__ == '__main__':
+    # if the script is run standalone then the user_id is the last user that authorized. His file must exist.
+    app = dash.Dash(name='app', url_base_pathname='/app/')
+    app.layout = main()
+    app.run_server(debug=True, port=8080)
