@@ -12,7 +12,7 @@ from urllib.parse import quote
 from flask_classful import FlaskView, route
 import pandas as pd
 import numpy as np
-from app_tabs import main, init_callbacks
+from app import main, init_callbacks
 
 server = Flask(__name__)
 server.secret_key = 'effro'

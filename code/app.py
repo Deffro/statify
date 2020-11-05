@@ -13,7 +13,6 @@ import dash_table
 # from server2 import app
 from flask import Flask, request, redirect, render_template, url_for, session
 
-
 css_values = {
     'title_fontSize': '20px',
     'description_fontSize': '11.5px'
@@ -152,6 +151,40 @@ def annotate_and_finalize_user_top_tracks(user_id, user_top_tracks_data_long_ter
     return user_top_tracks_across_periods_df, clrs_last_mo, clrs_6_mo
 
 
+def plot_top_albums(df):
+    return dcc.Graph(
+        id='top-albums',
+        figure={
+            'data': [
+                go.Table(
+                    columnwidth=[35, 20, 11],
+                    header=dict(
+                        values=list(
+                            f"<b>{c}</b>" for c in
+                            df.columns),
+                        fill_color='#1759c2',
+                        align='center',
+                        height=30,
+                        font=dict(color='white', size=18)
+                    ),
+                    cells=dict(values=[df[c] for c in
+                                       df.columns],
+                               # fill_color=['white', 'white', clrs_6_mo, clrs_last_mo],
+                               line_color='#e1f0e5',
+                               align='center',
+                               font=dict(color='black', size=18),
+                               height=30
+                               )
+                )
+            ],
+            'layout': go.Layout(
+                margin=dict(t=0, l=0, r=0, b=0),
+                height=800
+            )
+        }
+    )
+
+
 def plot_top_entity_across_periods(df, clrs_6_mo, clrs_last_mo, entity):
     if entity == 'artist':
         return dcc.Graph(
@@ -181,7 +214,7 @@ def plot_top_entity_across_periods(df, clrs_6_mo, clrs_last_mo, entity):
                 ],
                 'layout': go.Layout(
                     margin=dict(t=0, l=0, r=0, b=0),
-                    height=200
+                    height=800
                 )
             }
         )
@@ -298,9 +331,16 @@ def plot_artist_sunburst(df, title):
 def plot_bubble(df):
     fig = px.scatter(df, x="Release Date", y="Song Popularity",
                      size="Song Duration in Seconds", color="Artist",
-                     hover_name="Song", size_max=60)
+                     hover_name="Song", size_max=30)
     fig.update_layout(yaxis=dict(gridcolor='#DFEAF4'),
-                      xaxis=dict(gridcolor='#DFEAF4'), plot_bgcolor='white')
+                      xaxis=dict(gridcolor='#DFEAF4'), plot_bgcolor='white',
+                      legend=dict(
+                          xanchor='center',
+                          yanchor='top',
+                          y=-0.3,
+                          x=0.5,
+                          orientation='h')
+                      )
     return fig
 
 
@@ -372,14 +412,14 @@ def plot_related_artists(df):
 def plot_for_musicians(data):
     data = data[[
         'song_name', 'artist_name', 'key', 'mode', 'time_signature', 'tempo', 'duration_ms']]
-    data['mode'] = data['mode'].\
+    data['mode'] = data['mode']. \
         map({1: 'major', 0: 'minor'})
     data['key'] = data['key'].map({
         0: 'C', 1: 'C♯/D♭', 2: 'D', 3: 'D♯/E♭', 4: 'E', 5: 'F', 6: 'F♯/G♭', 7: 'G', 8: 'G♯/A♭',
         9: 'A', 10: 'A♯/B♭', 11: 'B'
     })
     data['time_signature'] = data['time_signature'].astype(str)
-    data['tempo'] = data['tempo'].\
+    data['tempo'] = data['tempo']. \
         apply(lambda x: np.round(x, 2))
     data = data.rename(
         columns={'song_name': 'Track', 'artist_name': 'Artist', 'key': 'Key', 'mode': 'Scale',
@@ -395,7 +435,7 @@ def plot_for_musicians(data):
             # 'textAlign': 'left',
             # 'whiteSpace': 'normal',
             # 'height': 'auto',
-            'minWidth': '40px', 'width': '120px', 'maxWidth': '150px',
+            'minWidth': '75px', 'width': '120px', 'maxWidth': '150px',
             'overflow': 'hidden',
             'textOverflow': 'ellipsis',
         },
@@ -409,9 +449,11 @@ def plot_for_musicians(data):
             {'if': {'column_id': 'Scale'},
              'textAlign': 'left', 'width': '75px'},
             {'if': {'column_id': 'Beats/Bar'},
-             'textAlign': 'center'},
+             'textAlign': 'center', 'width': '110px'},
             {'if': {'column_id': 'Bpm'},
-             'textAlign': 'right', 'width': '55px'},
+             'textAlign': 'left', 'width': '45px'},
+            {'if': {'column_id': 'Duration'},
+             'textAlign': 'left', 'width': '100px'},
         ],
         style_data_conditional=[
             {
@@ -432,7 +474,7 @@ def plot_for_musicians(data):
 
 def init_callbacks(dash_app):
     @dash_app.callback(Output('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children'),
-                  [Input('scatter_polar_energy_track_number', 'value')])
+                       [Input('scatter_polar_energy_track_number', 'value')])
     def intermediate_get_user_all_tracks_with_audio_features_for_scatter_polar(value):
         if __name__ == '__main__':
             users = pd.read_csv('../data/users.csv')
@@ -458,7 +500,7 @@ def init_callbacks(dash_app):
         return user_all_tracks_with_audio_features.head(value).to_json()
 
     @dash_app.callback(Output('scatter_polar_energy', 'figure'),
-                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+                       [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
     def plot_scatter_polar_energy(data):
         data = pd.read_json(data)
         feat = 'energy'
@@ -466,11 +508,11 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_danceability', 'figure'),
-                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+                       [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
     def plot_scatter_polar_danceability(data):
         data = pd.read_json(data)
         feat = 'danceability'
@@ -478,11 +520,11 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_loudness', 'figure'),
-                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+                       [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
     def plot_scatter_polar_loudness(data):
         data = pd.read_json(data)
         feat = 'loudness'
@@ -490,11 +532,11 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_speechiness', 'figure'),
-                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+                       [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
     def plot_scatter_polar_speechiness(data):
         data = pd.read_json(data)
         feat = 'speechiness'
@@ -502,11 +544,11 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_acousticness', 'figure'),
-                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+                       [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
     def plot_scatter_polar_acousticness(data):
         data = pd.read_json(data)
         feat = 'acousticness'
@@ -514,11 +556,11 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_instrumentalness', 'figure'),
-                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+                       [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
     def plot_scatter_polar_instrumentalness(data):
         data = pd.read_json(data)
         feat = 'instrumentalness'
@@ -526,11 +568,11 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_liveness', 'figure'),
-                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+                       [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
     def plot_scatter_polar_liveness(data):
         data = pd.read_json(data)
         feat = 'liveness'
@@ -538,11 +580,11 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_valence', 'figure'),
-                  [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
+                       [Input('intermediate-get-user-all-tracks-with-audio-features-for-scatter-polar', 'children')])
     def plot_scatter_polar_valence(data):
         data = pd.read_json(data)
         feat = 'valence'
@@ -550,12 +592,12 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.5)
+        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
         return fig
 
     @dash_app.callback(Output('spider-track', 'figure'),
-                  [Input('spider-track-dropdown1', 'value'),
-                   Input('spider-track-dropdown2', 'value')])
+                       [Input('spider-track-dropdown1', 'value'),
+                        Input('spider-track-dropdown2', 'value')])
     def plot_spider_track(value1, value2):
         feats = ['danceability', 'energy', 'speechiness', 'instrumentalness', 'liveness', 'acousticness', 'valence']
         if __name__ == '__main__':
@@ -606,6 +648,7 @@ def init_callbacks(dash_app):
             ),
             legend=dict(font=dict(size=8)),
             showlegend=True,
+            height=600
         )
         return fig
 
@@ -628,6 +671,16 @@ def main():
     user_saved_tracks = pd.read_csv(f'../data/{user_id}/user_saved_tracks_data.csv')
     audio_features = pd.read_csv(f'../data/{user_id}/user_tracks_audio_features.csv')
     related_artists = pd.read_csv(f'../data/{user_id}/related_artists.csv')
+
+    user_all_top_tracks = pd.concat([user_top_tracks_data_long_term, user_top_tracks_data_medium_term,
+                                     user_top_tracks_data_short_term])
+    user_top_albums = user_all_top_tracks.groupby('album_name')['song_name']. \
+        count().to_frame().reset_index().sort_values(by='song_name', ascending=False).head()
+    user_top_albums = user_top_albums.merge(user_all_top_tracks.drop(['song_name'], axis=1),
+                                            how='left', on='album_name')[['album_name', 'artist_name', 'song_name']]
+    user_top_albums = user_top_albums.rename(
+        columns={'album_name': 'Album', 'artist_name': 'Artist',
+                 'song_name': 'Tracks'}).drop_duplicates()
 
     user_saved_tracks = user_saved_tracks.sort_values(by='added_at')
     user_saved_tracks = user_saved_tracks.reset_index()
@@ -663,7 +716,8 @@ def main():
         lambda x: np.round(x, 3))
     user_all_tracks_with_audio_features['acousticness'] = user_all_tracks_with_audio_features['acousticness'].apply(
         lambda x: np.round(x, 3))
-    user_all_tracks_with_audio_features['instrumentalness'] = user_all_tracks_with_audio_features['instrumentalness'].apply(
+    user_all_tracks_with_audio_features['instrumentalness'] = user_all_tracks_with_audio_features[
+        'instrumentalness'].apply(
         lambda x: np.round(x, 3))
     user_all_tracks_with_audio_features['speechiness'] = user_all_tracks_with_audio_features['speechiness'].apply(
         lambda x: np.round(x, 3))
@@ -944,493 +998,544 @@ def main():
                    'borderBottom': '2px black solid'}
         ),
 
-        html.Div([
-            '🎤 My Top Artists 🎤'
-        ],
-            style={'width': '58%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                   'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': '22px', 'marginTop': '10px',
-                   'marginBottom': '10px'}
-        ),
-
-        html.Div([
-            '🎶 My Top Tracks 🎶'
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                   'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': '22px', 'marginTop': '10px',
-                   'marginBottom': '10px'}
-        ),
-
-        html.Div([
-
-            html.Div([
-                plot_top_entity_across_periods(user_top_artists_across_periods,
-                                               colors_6_mo_artists, colors_last_mo_artists,
-                                               entity='artist'
-                                               )
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-            html.Div([
-                'My Top Genres over three Listening Periods'
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                       'marginTop': '60px', 'marginBottom': '0px'}
-            ),
-            html.Div([
-                "Click on a genre name to expand it and see the artists related to it."
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
-                       'marginBottom': '0px'}
-            ),
-
-            html.Div([
-                dcc.Graph(figure=plot_artist_sunburst(top_genres_sunburst_data_long, title='All Time'))
-            ],
-                style={'width': '33%', 'display': 'inline-block', 'float': 'left', 'position': 'static',
-                       'marginTop': '0px', 'padding': 0}
-            ),
-
-            html.Div([
-                dcc.Graph(
-                    figure=plot_artist_sunburst(top_genres_sunburst_data_medium, title='Last 6 Months'))
-            ],
-                style={'width': '33%', 'display': 'inline-block', 'float': 'left', 'position': 'static',
-                       'marginTop': '0px', 'padding': 0}
-            ),
-
-            html.Div([
-                dcc.Graph(figure=plot_artist_sunburst(top_genres_sunburst_data_short, title='Last Month'))
-            ],
-                style={'width': '33%', 'display': 'inline-block', 'float': 'left', 'position': 'static',
-                       'marginTop': '0px', 'padding': 0}
-            ),
-
-            html.Div([
-                'My Top Songs over Release Date and their Spotify Popularity'
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                       'marginTop': '30px', 'marginBottom': '0px'}
-            ),
-            html.Div([
-                "Bubble size determines songs' duration. You can hold and draw a rectangle to zoom. Hover over bubbles "
-                "to see more details. You can click on an artist on the right to remove his/her tracks from the figure "
-                "or double click on an artist to remove all the others. After removing all the artists you can click "
-                "on them one by one to add them or double click again to create the initial figure."
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
-                       'marginBottom': '0px'}
-            ),
-
-            html.Div([
-                dcc.Graph(figure=plot_bubble(user_top_tracks_data_long_term))
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-            my_library_section,
-
-            html.Div([
-                'Related Artists/Suggestions'
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                       'marginTop': '30px', 'marginBottom': '0px'}
-            ),
-            html.Div([
-                "Related artists that are not in my top 50 artists nor in my library. Maybe I should check them. "
-                "Every column can be sorted with the arrows existing in the header. Below the header, position your "
-                "mouse and click 'filter data...'. You can write for example <30 in Popularity or a text in the "
-                "Genres. Hit enter to apply the filtering."
-                ""
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
-                       'marginBottom': '0px'}
-            ),
-
-            html.Div([
-                plot_related_artists(related_artists_suggestions),
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'marginTop': '20px'}
-            ),
-
-            html.Div([
-                'Track Distribution by Audio Features'
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                       'marginTop': '30px', 'marginBottom': '0px'}
-            ),
-            html.Div([
-                "Polar Plots for the 8 audio characteristics of your tracks. The characteristis are the following:",
-                html.Br(),
-                html.B('Energy'), ": measure of intencity and activity based on dynamic range, perceived loudness, "
-                "timbre, onset rate and general entropy. energetic tracks feel fast, loud and noisy",
-                html.Br(),
-                html.B('Valence'), ": musical positiveness conveyed by a track",
-                html.Br(),
-                html.B('Loudness'), ": decibels",
-                html.Br(),
-                html.B('Danceability'), ": how suitable a track is for dancing based on tempo, rhythm stability, "
-                "beat strength and overall regularity.",
-                html.Br(),
-                html.B('Acousticness'), ": confidence if the track is acoustic",
-                html.Br(),
-                html.B('Instrumentalness'), ": confidence if the track has no vocals",
-                html.Br(),
-                html.B('Speechiness'), ": Speechiness detects the presence of spoken words in a track. The more "
-                "exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the "
-                "attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words. "
-                "Values between 0.33 and 0.66 describe tracks that may contain both music and speech, either in "
-                "sections or layered, including such cases as rap music. Values below 0.33 most likely represent "
-                "music and other non-speech-like tracks",
-                html.Br(),
-                html.B('Liveness'), ": confidence if there is audience and so the track is live",
-                html.Br(),
-                "On the drowdown select the number of tracks to be displayed in each of the 8 plots.",
-                html.B('For big numbers you might wait up to 30 seconds for the new plots to be created.'),
-                "You can zoom "
-                "in the plot by clicking and dragging. You can play with the artists on the right. You can even "
-                "rotate the plot by putting the mouse right outside of the circle."
-
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'left',
-                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
-                       'marginBottom': '20px'}
-            ),
-
-            html.Div([
-                dcc.Dropdown(id='scatter_polar_energy_track_number',
-                             options=[{'label': str(i), 'value': i} for i in
-                                      range(int(user_all_tracks_with_audio_features.shape[0] / 20),
-                                            user_all_tracks_with_audio_features.shape[0] + 1,
-                                            int(user_all_tracks_with_audio_features.shape[0] / 20))],
-                             value=50,
-                             placeholder="Select the number of tracks to be displayed"),
-                dcc.Graph(id='scatter_polar_energy'),
-                dcc.Graph(id='scatter_polar_valence'),
-                dcc.Graph(id='scatter_polar_loudness'),
-                dcc.Graph(id='scatter_polar_danceability'),
-                dcc.Graph(id='scatter_polar_acousticness'),
-                dcc.Graph(id='scatter_polar_instrumentalness'),
-                dcc.Graph(id='scatter_polar_speechiness'),
-                dcc.Graph(id='scatter_polar_liveness'),
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-        ],
-            style={'width': '58%', 'display': 'inline-block', 'float': 'left'}
-        ),
-
-        html.Div([
-
-            html.Div([
-                generate_table_top_tracks(user_top_tracks_across_periods, colors_last_mo_tracks, colors_6_mo_tracks),
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
-            ),
-
-            html.Div([
-                'Audio Characteristics Comparison'
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                       'marginTop': '30px', 'marginBottom': '0px'}
-            ),
-            html.Div([
-                "1 vs 1 Comparison of two of your Tracks on 7 audio characteristics. You can select the two tracks "
-                "from the two dropdowns. You can zoom on the plot by clicking and dragging. You can click on a track "
-                "on the right of the plot to remove it."
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
-                       'marginBottom': '0px'}
-            ),
-
-            html.Div([
-                dcc.Dropdown(id='spider-track-dropdown1',
-                             options=[{'label': f'Artist: {row[1]}, Track: {row[0]}', 'value': row[2]}
-                                      for row in user_all_tracks[['song_name', 'artist_name', 'song_external_url']].
-                                      sort_values(by=['artist_name', 'song_name']).values],
-                             value=user_all_tracks.iloc[0]['song_external_url'],
-                             placeholder="Select a track"),
-                dcc.Dropdown(id='spider-track-dropdown2',
-                             options=[{'label': f'Artist: {row[1]}, Track: {row[0]}', 'value': row[2]}
-                                      for row in user_all_tracks[['song_name', 'artist_name', 'song_external_url']].
-                                      sort_values(by=['artist_name', 'song_name']).values],
-                             value=user_all_tracks.iloc[1]['song_external_url'],
-                             placeholder="Select another track"),
-                dcc.Graph(id='spider-track'),
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
-            ),
-
-            html.Div([
-                'For musicians'
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                       'marginTop': '30px', 'marginBottom': '0px'}
-            ),
-            html.Div([
-                "Filter and sort columns by your liking. For example enter '3' in Beats/Bar, '>145' in "
-                "Bpm and 'minor' in Scale and press enter. Duration is in milliseconds."
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'], 'marginTop': '0px',
-                       'marginBottom': '0px'}
-            ),
-
-            html.Div([
-                plot_for_musicians(user_all_tracks_with_audio_features)
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
-            ),
-
-            html.Div([
-                'Top/Low 5 tracks on each Audio Characteristic'
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
-                       'marginTop': '30px', 'marginBottom': '30px'}
-            ),
-
-            html.Div([
-
+        dcc.Tabs([
+            dcc.Tab(label='My Top',
+                    selected_style={'fontSize': '25px', 'fontWeight': 'bold', 'backgroundColor': '#fafffa',
+                                    'fontFamily': 'helvetica'},
+                    style={'fontSize': '25px', 'fontWeight': 'bold', 'fontFamily': 'helvetica'},
+                    children=[
                 html.Div([
-                    html.Div([
-                        'Top 5 Energy'
-                    ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                    ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_energy, '#d1701b'))
+                    '🎤 My Top Artists 🎤'
                 ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'left'}
+                    style={'width': '58%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': '22px', 'marginTop': '10px',
+                           'marginBottom': '10px'}
                 ),
 
                 html.Div([
                     html.Div([
-                        'Low 5 Energy'
+                        plot_top_entity_across_periods(user_top_artists_across_periods,
+                                                       colors_6_mo_artists, colors_last_mo_artists,
+                                                       entity='artist'
+                                                       )
                     ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_energy, '#d1701b'))
+
+                    html.Div([
+                        'My Top Genres over three Listening Periods'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '60px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "Click on a genre name to expand it and see the artists related to it."
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+
+                    html.Div([
+                        dcc.Graph(figure=plot_artist_sunburst(top_genres_sunburst_data_long, title='All Time'))
+                    ],
+                        style={'width': '33%', 'display': 'inline-block', 'float': 'left', 'position': 'static',
+                               'marginTop': '0px', 'padding': 0}
+                    ),
+
+                    html.Div([
+                        dcc.Graph(
+                            figure=plot_artist_sunburst(top_genres_sunburst_data_medium, title='Last 6 Months'))
+                    ],
+                        style={'width': '33%', 'display': 'inline-block', 'float': 'left', 'position': 'static',
+                               'marginTop': '0px', 'padding': 0}
+                    ),
+
+                    html.Div([
+                        dcc.Graph(figure=plot_artist_sunburst(top_genres_sunburst_data_short, title='Last Month'))
+                    ],
+                        style={'width': '33%', 'display': 'inline-block', 'float': 'left', 'position': 'static',
+                               'marginTop': '0px', 'padding': 0}
+                    ),
+
+                    html.Div([
+                        'My Top Songs over Release Date and their Spotify Popularity'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "Bubble size determines songs' duration. You can hold and draw a rectangle to zoom. Hover over bubbles "
+                        "to see more details. You can click on an artist on the bottom to remove his/her tracks from the figure "
+                        "or double click on an artist to remove all the others. After removing all the artists you can click "
+                        "on them one by one to add them or double click again to create the initial figure."
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+
+                    html.Div([
+                        dcc.Graph(figure=plot_bubble(user_top_tracks_data_long_term))
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                    ),
+
+                    html.Div([
+                        'My Top Albums based on the number of top tracks in them'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '20px'}
+                    ),
+
+                    html.Div([
+                        plot_top_albums(user_top_albums)
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                    ),
+
+
                 ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'right'}
+                    style={'width': '58%', 'display': 'inline-block', 'float': 'left'}
                 ),
 
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
+                html.Div([
+                    '🎶 My Top Tracks 🎶'
+                ],
+                    style={'width': '40%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': '22px', 'marginTop': '-40px',
+                           'marginBottom': '10px'}
+                ),
 
-            html.Div([
+                html.Div([
+
+                    html.Div([
+                        generate_table_top_tracks(user_top_tracks_across_periods, colors_last_mo_tracks,
+                                                  colors_6_mo_tracks),
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
+                    ),
+
+                ],
+                    style={'width': '40%', 'display': 'inline-block', 'float': 'right'}
+                )
+
+            ],
+            ),
+            dcc.Tab(label='My Library',
+                    selected_style={'fontSize': '25px', 'fontWeight': 'bold', 'backgroundColor': '#fafffa',
+                                    'fontFamily': 'helvetica'},
+                    style={'fontSize': '25px', 'fontWeight': 'bold', 'fontFamily': 'helvetica'},
+                    children=[
+
+                my_library_section,
+                html.Div([
+                    'Related Artists/Suggestions'
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                           'marginTop': '30px', 'marginBottom': '0px'}
+                ),
+                html.Div([
+                    "Related artists that are not in my top 50 artists nor in my library. Maybe I should check them. "
+                    "Every column can be sorted with the arrows existing in the header. Below the header, position your "
+                    "mouse and click 'filter data...'. You can write for example <30 in Popularity or a text in the "
+                    "Genres. Hit enter to apply the filtering."
+                    ""
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                           'marginTop': '0px',
+                           'marginBottom': '0px'}
+                ),
+
+                html.Div([
+                    plot_related_artists(related_artists_suggestions),
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'marginTop': '20px'}
+                ),
+
+            ]),
+            dcc.Tab(label='My Audio Features',
+                    selected_style={'fontSize': '25px', 'fontWeight': 'bold', 'backgroundColor': '#fafffa',
+                                    'fontFamily': 'helvetica'},
+                    style={'fontSize': '25px', 'fontWeight': 'bold', 'fontFamily': 'helvetica'},
+                    children=[
+
+                html.Div([
+                    'Track Distribution by Audio Features'
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                           'marginTop': '30px', 'marginBottom': '0px'}
+                ),
+                html.Div([
+                    "Polar Plots for the 8 audio characteristics of your tracks. The characteristis are the following:",
+                    html.Br(),
+                    html.B('Energy'), ": measure of intencity and activity based on dynamic range, perceived loudness, "
+                                      "timbre, onset rate and general entropy. energetic tracks feel fast, loud and noisy",
+                    html.Br(),
+                    html.B('Valence'), ": musical positiveness conveyed by a track",
+                    html.Br(),
+                    html.B('Loudness'), ": decibels",
+                    html.Br(),
+                    html.B('Danceability'), ": how suitable a track is for dancing based on tempo, rhythm stability, "
+                                            "beat strength and overall regularity.",
+                    html.Br(),
+                    html.B('Acousticness'), ": confidence if the track is acoustic",
+                    html.Br(),
+                    html.B('Instrumentalness'), ": confidence if the track has no vocals",
+                    html.Br(),
+                    html.B('Speechiness'), ": Speechiness detects the presence of spoken words in a track. The more "
+                                           "exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the "
+                                           "attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words. "
+                                           "Values between 0.33 and 0.66 describe tracks that may contain both music and speech, either in "
+                                           "sections or layered, including such cases as rap music. Values below 0.33 most likely represent "
+                                           "music and other non-speech-like tracks",
+                    html.Br(),
+                    html.B('Liveness'), ": confidence if there is audience and so the track is live",
+                    html.Br(),
+                    "On the drowdown select the number of tracks to be displayed in each of the 8 plots.",
+                    html.B('For big numbers you might wait up to 30 seconds for the new plots to be created.'),
+                    "You can zoom "
+                    "in the plot by clicking and dragging. You can play with the artists on the right. You can even "
+                    "rotate the plot by putting the mouse right outside of the circle."
+
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'left',
+                           'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                           'marginTop': '0px',
+                           'marginBottom': '20px'}
+                ),
+
+                html.Div([
+                    dcc.Dropdown(id='scatter_polar_energy_track_number',
+                                 options=[{'label': str(i), 'value': i} for i in
+                                          range(int(user_all_tracks_with_audio_features.shape[0] / 20),
+                                                user_all_tracks_with_audio_features.shape[0] + 1,
+                                                int(user_all_tracks_with_audio_features.shape[0] / 20))],
+                                 value=50,
+                                 placeholder="Select the number of tracks to be displayed"),
+                    dcc.Graph(id='scatter_polar_energy'),
+                    dcc.Graph(id='scatter_polar_valence'),
+                    dcc.Graph(id='scatter_polar_loudness'),
+                    dcc.Graph(id='scatter_polar_danceability'),
+                    dcc.Graph(id='scatter_polar_acousticness'),
+                    dcc.Graph(id='scatter_polar_instrumentalness'),
+                    dcc.Graph(id='scatter_polar_speechiness'),
+                    dcc.Graph(id='scatter_polar_liveness'),
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                ),
+            ]),
+            dcc.Tab(label='For Fun',
+                    selected_style={'fontSize': '25px', 'fontWeight': 'bold', 'backgroundColor': '#fafffa',
+                                    'fontFamily': 'helvetica'},
+                    style={'fontSize': '25px', 'fontWeight': 'bold', 'fontFamily': 'helvetica'},
+                    children=[
+
+                html.Div([
+                    'Audio Characteristics Comparison'
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                           'marginTop': '30px', 'marginBottom': '0px'}
+                ),
+                html.Div([
+                    "1 vs 1 Comparison of two of your Tracks on 7 audio characteristics. You can select the two tracks "
+                    "from the two dropdowns. You can zoom on the plot by clicking and dragging. You can click on a track "
+                    "on the right of the plot to remove it."
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                           'marginTop': '0px',
+                           'marginBottom': '0px'}
+                ),
+
+                html.Div([
+                    dcc.Dropdown(id='spider-track-dropdown1',
+                                 options=[{'label': f'Artist: {row[1]}, Track: {row[0]}', 'value': row[2]}
+                                          for row in user_all_tracks[['song_name', 'artist_name', 'song_external_url']].
+                                 sort_values(by=['artist_name', 'song_name']).values],
+                                 value=user_all_tracks.iloc[0]['song_external_url'],
+                                 placeholder="Select a track"),
+                    dcc.Dropdown(id='spider-track-dropdown2',
+                                 options=[{'label': f'Artist: {row[1]}, Track: {row[0]}', 'value': row[2]}
+                                          for row in user_all_tracks[['song_name', 'artist_name', 'song_external_url']].
+                                 sort_values(by=['artist_name', 'song_name']).values],
+                                 value=user_all_tracks.iloc[1]['song_external_url'],
+                                 placeholder="Select another track"),
+                    dcc.Graph(id='spider-track'),
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
+                ),
+
+                html.Div([
+                    'For musicians'
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                           'marginTop': '30px', 'marginBottom': '0px'}
+                ),
+                html.Div([
+                    "Filter and sort columns by your liking. For example enter '3' in Beats/Bar, '>145' in "
+                    "Bpm and 'minor' in Scale and press enter. Duration is in milliseconds."
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                           'marginTop': '0px',
+                           'marginBottom': '0px'}
+                ),
+
+                html.Div([
+                    plot_for_musicians(user_all_tracks_with_audio_features)
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'right'}
+                ),
+
+                html.Div([
+                    'Top/Low 5 tracks on each Audio Characteristic'
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                           'marginTop': '30px', 'marginBottom': '30px'}
+                ),
+
+                html.Div([
+
+                    html.Div([
+                        html.Div([
+                            'Top 5 Energy'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_energy, '#d1701b'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'left'}
+                    ),
+
+                    html.Div([
+                        html.Div([
+                            'Low 5 Energy'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_energy, '#d1701b'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'right'}
+                    ),
+
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                ),
+
+                html.Div([
+
+                    html.Div([
+                        html.Div([
+                            'Top 5 Valence'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_valence, '#037010'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'left',
+                               'marginTop': '30px'}
+                    ),
+
+                    html.Div([
+                        html.Div([
+                            'Low 5 Valence'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_valence, '#037010'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                    ),
+
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                ),
+
+                html.Div([
+
+                    html.Div([
+                        html.Div([
+                            'Top 5 Loudness'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_loudness, '#324034'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'left',
+                               'marginTop': '30px'}
+                    ),
+
+                    html.Div([
+                        html.Div([
+                            'Low 5 Loudness'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_loudness, '#324034'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                    ),
+
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                ),
+
+                html.Div([
+
+                    html.Div([
+                        html.Div([
+                            'Top 5 Danceability'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_danceability, '#b4cc14'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'left',
+                               'marginTop': '30px'}
+                    ),
+
+                    html.Div([
+                        html.Div([
+                            'Low 5 Danceability'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_danceability, '#b4cc14'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                    ),
+
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                ),
+
+                html.Div([
+
+                    html.Div([
+                        html.Div([
+                            'Top 5 Acousticness'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_acousticness, '#1b4f8f'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'left',
+                               'marginTop': '30px'}
+                    ),
+
+                    html.Div([
+                        html.Div([
+                            'Low 5 Acousticness'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_acousticness, '#1b4f8f'))
+                    ],
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                    ),
+
+                ],
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                ),
 
                 html.Div([
                     html.Div([
-                        'Top 5 Valence'
+                        'Top 5 Instrumentalness'
                     ],
                         style={'textAlign': 'center', 'fontFamily': 'helvetica'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_valence, '#037010'))
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_instrumentalness, '#9c0000'))
                 ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
+                    style={'width': '49.7%', 'display': 'inline-block', 'float': 'left',
                            'marginTop': '30px'}
                 ),
 
                 html.Div([
                     html.Div([
-                        'Low 5 Valence'
+                        'Low 5 Instrumentalness'
                     ],
                         style={'textAlign': 'center', 'fontFamily': 'helvetica'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_valence, '#037010'))
+                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_instrumentalness, '#9c0000'))
                 ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                    style={'width': '49.7%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
                 ),
 
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-            html.Div([
-
                 html.Div([
+
                     html.Div([
-                        'Top 5 Loudness'
+                        html.Div([
+                            'Top 5 Speechiness'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_speechiness, '#4f1d82'))
                     ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'left',
+                               'marginTop': '30px'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_loudness, '#324034'))
-                ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
-                           'marginTop': '30px'}
-                ),
 
-                html.Div([
                     html.Div([
-                        'Low 5 Loudness'
+                        html.Div([
+                            'Low 5 Speechiness'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_speechiness, '#4f1d82'))
                     ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_loudness, '#324034'))
+
                 ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
                 ),
 
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-            html.Div([
-
                 html.Div([
+
                     html.Div([
-                        'Top 5 Danceability'
+                        html.Div([
+                            'Top 5 Liveness'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_liveness, '#41db2a'))
                     ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'left',
+                               'marginTop': '30px'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_danceability, '#b4cc14'))
-                ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
-                           'marginTop': '30px'}
-                ),
 
-                html.Div([
                     html.Div([
-                        'Low 5 Danceability'
+                        html.Div([
+                            'Low 5 Liveness'
+                        ],
+                            style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        ),
+                        dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_liveness, '#41db2a'))
                     ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
+                        style={'width': '49.7%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
                     ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_danceability, '#b4cc14'))
+
                 ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
+                    style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
                 ),
-
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-            html.Div([
-
-                html.Div([
-                    html.Div([
-                        'Top 5 Acousticness'
-                    ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                    ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_acousticness, '#1b4f8f'))
-                ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
-                           'marginTop': '30px'}
-                ),
-
-                html.Div([
-                    html.Div([
-                        'Low 5 Acousticness'
-                    ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                    ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_acousticness, '#1b4f8f'))
-                ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
-                ),
-
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-            html.Div([
-                html.Div([
-                    'Top 5 Instrumentalness'
-                ],
-                    style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                ),
-                dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_instrumentalness, '#9c0000'))
-            ],
-                style={'width': '50%', 'display': 'inline-block', 'float': 'left',
-                       'marginTop': '30px'}
-            ),
-
-            html.Div([
-                html.Div([
-                    'Low 5 Instrumentalness'
-                ],
-                    style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                ),
-                dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_instrumentalness, '#9c0000'))
-            ],
-                style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
-            ),
-
-            html.Div([
-
-                html.Div([
-                    html.Div([
-                        'Top 5 Speechiness'
-                    ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                    ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_speechiness, '#4f1d82'))
-                ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
-                           'marginTop': '30px'}
-                ),
-
-                html.Div([
-                    html.Div([
-                        'Low 5 Speechiness'
-                    ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                    ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_speechiness, '#4f1d82'))
-                ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
-                ),
-
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-            html.Div([
-
-                html.Div([
-                    html.Div([
-                        'Top 5 Liveness'
-                    ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                    ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(top_liveness, '#41db2a'))
-                ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'left',
-                           'marginTop': '30px'}
-                ),
-
-                html.Div([
-                    html.Div([
-                        'Low 5 Liveness'
-                    ],
-                        style={'textAlign': 'center', 'fontFamily': 'helvetica'}
-                    ),
-                    dcc.Graph(figure=plot_artists_or_albums_with_most_saved_tracks(bot_liveness, '#41db2a'))
-                ],
-                    style={'width': '50%', 'display': 'inline-block', 'float': 'right', 'marginTop': '30px'}
-                ),
-
-            ],
-                style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
-            ),
-
-        ],
-            style={'width': '40%', 'display': 'inline-block', 'float': 'right'}
-        )
-    ],
-    )
+            ]),
+        ])
+    ])
 
     return layout
 
