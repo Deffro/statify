@@ -16,6 +16,7 @@
 - Copy and paste them in server.py
 - Run ngrok.exe and type ngrok http 8080
 - Copy and paste the ngrok url in CLIENT_SIDE_URL in server.py
+- Visit again your spotify app, go to settings and under Redirect URIs paste the ngrok url
 - From terminal run: python server.py
 - In a browser visit the ngrok url
 
