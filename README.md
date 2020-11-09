@@ -1,4 +1,5 @@
 # Statify
+An app where anyone can join with spotify credentials and see a lot of cool statistics about his/her profile.
 
 ![Statify-Demo](demo.gif)
 
