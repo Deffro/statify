@@ -29,7 +29,7 @@ API_VERSION = "v1"
 SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
 
 # Server-side Parameters
-CLIENT_SIDE_URL = "http://5cc837a96d2d.ngrok.io"  # "http://127.0.0.1"
+CLIENT_SIDE_URL = "http://85d525d878db.ngrok.io"  # "http://127.0.0.1"
 PORT = 8080
 REDIRECT_URI = "{}/callback/q".format(CLIENT_SIDE_URL)
 SCOPE = "user-top-read user-follow-modify user-library-read playlist-read-private " \

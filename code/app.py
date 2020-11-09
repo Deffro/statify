@@ -14,8 +14,8 @@ import dash_table
 from flask import Flask, request, redirect, render_template, url_for, session
 
 css_values = {
-    'title_fontSize': '20px',
-    'description_fontSize': '11.5px'
+    'title_fontSize': '25px',
+    'description_fontSize': '16px',
 }
 
 
@@ -385,8 +385,6 @@ def plot_related_artists(df):
         style_cell_conditional=[
             {'if': {'column_id': 'Artist'},
              'width': '120px'},
-            # {'if': {'column_id': 'Followers'},
-            #  'width': '15%'},
             {'if': {'column_id': 'Popularity'},
              'width': '140px'},
             {'if': {'column_id': 'Genres'},
@@ -508,7 +506,7 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
+        fig.update_layout(height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_danceability', 'figure'),
@@ -520,7 +518,7 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
+        fig.update_layout(height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_loudness', 'figure'),
@@ -532,7 +530,7 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
+        fig.update_layout(height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_speechiness', 'figure'),
@@ -544,7 +542,7 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
+        fig.update_layout(height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_acousticness', 'figure'),
@@ -556,7 +554,7 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
+        fig.update_layout(height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_instrumentalness', 'figure'),
@@ -568,7 +566,7 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
+        fig.update_layout(height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_liveness', 'figure'),
@@ -580,7 +578,7 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
+        fig.update_layout(height=800)
         return fig
 
     @dash_app.callback(Output('scatter_polar_valence', 'figure'),
@@ -592,7 +590,7 @@ def init_callbacks(dash_app):
                                color='artist_name',
                                hover_name='artist_name',
                                opacity=0.7)
-        fig.update_layout(title=f'Tracks distributed by {feat.capitalize()}', title_x=0.46, height=800)
+        fig.update_layout(height=800)
         return fig
 
     @dash_app.callback(Output('spider-track', 'figure'),
@@ -738,6 +736,63 @@ def main():
         'song_popularity': 'Song Popularity', 'album_release_date': 'Release Date',
         'artist_name': 'Artist', 'song_duration_sec': 'Song Duration in Seconds', 'song_name': 'Song'})
 
+    top_energy = user_all_tracks_with_audio_features.sort_values(by='energy', ascending=False).head(5)
+    top_energy = top_energy.rename(columns={'song_name_url': 'Track', 'energy': 'Energy',
+                                            'artist_name': 'Artist'})[['Track', 'Artist', 'Energy']]
+    bot_energy = user_all_tracks_with_audio_features.sort_values(by='energy', ascending=True).head(5)
+    bot_energy = bot_energy.rename(columns={'song_name_url': 'Track', 'energy': 'Energy',
+                                            'artist_name': 'Artist'})[['Track', 'Artist', 'Energy']]
+    top_valence = user_all_tracks_with_audio_features.sort_values(by='valence', ascending=False).head(5)
+    top_valence = top_valence.rename(columns={'song_name_url': 'Track', 'valence': 'Valence',
+                                              'artist_name': 'Artist'})[['Track', 'Artist', 'Valence']]
+    bot_valence = user_all_tracks_with_audio_features.sort_values(by='valence', ascending=True).head(5)
+    bot_valence = bot_valence.rename(columns={'song_name_url': 'Track', 'valence': 'Valence',
+                                              'artist_name': 'Artist'})[['Track', 'Artist', 'Valence']]
+    top_loudness = user_all_tracks_with_audio_features.sort_values(by='loudness', ascending=False).head(5)
+    top_loudness = top_loudness.rename(columns={'song_name_url': 'Track', 'loudness': 'Loudness',
+                                                'artist_name': 'Artist'})[['Track', 'Artist', 'Loudness']]
+    bot_loudness = user_all_tracks_with_audio_features.sort_values(by='loudness', ascending=True).head(5)
+    bot_loudness = bot_loudness.rename(columns={'song_name_url': 'Track', 'loudness': 'Loudness',
+                                                'artist_name': 'Artist'})[['Track', 'Artist', 'Loudness']]
+    top_danceability = user_all_tracks_with_audio_features.sort_values(by='danceability', ascending=False).head(5)
+    top_danceability = top_danceability.rename(columns={
+        'song_name_url': 'Track', 'danceability': 'Danceability',
+        'artist_name': 'Artist'})[['Track', 'Artist', 'Danceability']]
+    bot_danceability = user_all_tracks_with_audio_features.sort_values(by='danceability', ascending=True).head(5)
+    bot_danceability = bot_danceability.rename(columns={
+        'song_name_url': 'Track', 'danceability': 'Danceability',
+        'artist_name': 'Artist'})[['Track', 'Artist', 'Danceability']]
+    top_acousticness = user_all_tracks_with_audio_features.sort_values(by='acousticness', ascending=False).head(5)
+    top_acousticness = top_acousticness.rename(columns={
+        'song_name_url': 'Track', 'acousticness': 'Acousticness',
+        'artist_name': 'Artist'})[['Track', 'Artist', 'Acousticness']]
+    bot_acousticness = user_all_tracks_with_audio_features.sort_values(by='acousticness', ascending=True).head(5)
+    bot_acousticness = bot_acousticness.rename(columns={
+        'song_name_url': 'Track', 'acousticness': 'Acousticness',
+        'artist_name': 'Artist'})[['Track', 'Artist', 'Acousticness']]
+    top_instrumentalness = user_all_tracks_with_audio_features.sort_values(by='instrumentalness',
+                                                                           ascending=False).head(5)
+    top_instrumentalness = top_instrumentalness.rename(columns={
+        'song_name_url': 'Track', 'instrumentalness': 'Instrumental',
+        'artist_name': 'Artist'})[['Track', 'Artist', 'Instrumental']]
+    bot_instrumentalness = user_all_tracks_with_audio_features.sort_values(by='instrumentalness',
+                                                                           ascending=True).head(5)
+    bot_instrumentalness = bot_instrumentalness.rename(columns={
+        'song_name_url': 'Track', 'instrumentalness': 'Instrumental',
+        'artist_name': 'Artist'})[['Track', 'Artist', 'Instrumental']]
+    top_speechiness = user_all_tracks_with_audio_features.sort_values(by='speechiness', ascending=False).head(5)
+    top_speechiness = top_speechiness.rename(columns={'song_name_url': 'Track', 'speechiness': 'Speechiness',
+                                                      'artist_name': 'Artist'})[['Track', 'Artist', 'Speechiness']]
+    bot_speechiness = user_all_tracks_with_audio_features.sort_values(by='speechiness', ascending=True).head(5)
+    bot_speechiness = bot_speechiness.rename(columns={'song_name_url': 'Track', 'speechiness': 'Speechiness',
+                                                      'artist_name': 'Artist'})[['Track', 'Artist', 'Speechiness']]
+    top_liveness = user_all_tracks_with_audio_features.sort_values(by='liveness', ascending=False).head(5)
+    top_liveness = top_liveness.rename(columns={'song_name_url': 'Track', 'liveness': 'Liveness',
+                                                'artist_name': 'Artist'})[['Track', 'Artist', 'Liveness']]
+    bot_liveness = user_all_tracks_with_audio_features.sort_values(by='liveness', ascending=True).head(5)
+    bot_liveness = bot_liveness.rename(columns={'song_name_url': 'Track', 'liveness': 'Liveness',
+                                                'artist_name': 'Artist'})[['Track', 'Artist', 'Liveness']]
+
     if user_saved_tracks.shape[0] > 0:
         user_saved_tracks['song_name_url'] = user_saved_tracks. \
             apply(lambda x: f'<a href="{x["song_external_url"]}">{x["song_name"]}</a>', axis=1)
@@ -765,62 +820,7 @@ def main():
                                                               'index': 'Songs Saved'})[['Artist', 'Songs Saved']]
         top_saved_albums = top_saved_albums.rename(columns={'album_name_url': 'Album',
                                                             'index': 'Songs Saved'})[['Album', 'Songs Saved']]
-        top_energy = user_all_tracks_with_audio_features.sort_values(by='energy', ascending=False).head(5)
-        top_energy = top_energy.rename(columns={'song_name_url': 'Track', 'energy': 'Energy',
-                                                'artist_name': 'Artist'})[['Track', 'Artist', 'Energy']]
-        bot_energy = user_all_tracks_with_audio_features.sort_values(by='energy', ascending=True).head(5)
-        bot_energy = bot_energy.rename(columns={'song_name_url': 'Track', 'energy': 'Energy',
-                                                'artist_name': 'Artist'})[['Track', 'Artist', 'Energy']]
-        top_valence = user_all_tracks_with_audio_features.sort_values(by='valence', ascending=False).head(5)
-        top_valence = top_valence.rename(columns={'song_name_url': 'Track', 'valence': 'Valence',
-                                                  'artist_name': 'Artist'})[['Track', 'Artist', 'Valence']]
-        bot_valence = user_all_tracks_with_audio_features.sort_values(by='valence', ascending=True).head(5)
-        bot_valence = bot_valence.rename(columns={'song_name_url': 'Track', 'valence': 'Valence',
-                                                  'artist_name': 'Artist'})[['Track', 'Artist', 'Valence']]
-        top_loudness = user_all_tracks_with_audio_features.sort_values(by='loudness', ascending=False).head(5)
-        top_loudness = top_loudness.rename(columns={'song_name_url': 'Track', 'loudness': 'Loudness',
-                                                    'artist_name': 'Artist'})[['Track', 'Artist', 'Loudness']]
-        bot_loudness = user_all_tracks_with_audio_features.sort_values(by='loudness', ascending=True).head(5)
-        bot_loudness = bot_loudness.rename(columns={'song_name_url': 'Track', 'loudness': 'Loudness',
-                                                    'artist_name': 'Artist'})[['Track', 'Artist', 'Loudness']]
-        top_danceability = user_all_tracks_with_audio_features.sort_values(by='danceability', ascending=False).head(5)
-        top_danceability = top_danceability.rename(columns={
-            'song_name_url': 'Track', 'danceability': 'Danceability',
-            'artist_name': 'Artist'})[['Track', 'Artist', 'Danceability']]
-        bot_danceability = user_all_tracks_with_audio_features.sort_values(by='danceability', ascending=True).head(5)
-        bot_danceability = bot_danceability.rename(columns={
-            'song_name_url': 'Track', 'danceability': 'Danceability',
-            'artist_name': 'Artist'})[['Track', 'Artist', 'Danceability']]
-        top_acousticness = user_all_tracks_with_audio_features.sort_values(by='acousticness', ascending=False).head(5)
-        top_acousticness = top_acousticness.rename(columns={
-            'song_name_url': 'Track', 'acousticness': 'Acousticness',
-            'artist_name': 'Artist'})[['Track', 'Artist', 'Acousticness']]
-        bot_acousticness = user_all_tracks_with_audio_features.sort_values(by='acousticness', ascending=True).head(5)
-        bot_acousticness = bot_acousticness.rename(columns={
-            'song_name_url': 'Track', 'acousticness': 'Acousticness',
-            'artist_name': 'Artist'})[['Track', 'Artist', 'Acousticness']]
-        top_instrumentalness = user_all_tracks_with_audio_features.sort_values(by='instrumentalness',
-                                                                               ascending=False).head(5)
-        top_instrumentalness = top_instrumentalness.rename(columns={
-            'song_name_url': 'Track', 'instrumentalness': 'Instrumental',
-            'artist_name': 'Artist'})[['Track', 'Artist', 'Instrumental']]
-        bot_instrumentalness = user_all_tracks_with_audio_features.sort_values(by='instrumentalness',
-                                                                               ascending=True).head(5)
-        bot_instrumentalness = bot_instrumentalness.rename(columns={
-            'song_name_url': 'Track', 'instrumentalness': 'Instrumental',
-            'artist_name': 'Artist'})[['Track', 'Artist', 'Instrumental']]
-        top_speechiness = user_all_tracks_with_audio_features.sort_values(by='speechiness', ascending=False).head(5)
-        top_speechiness = top_speechiness.rename(columns={'song_name_url': 'Track', 'speechiness': 'Speechiness',
-                                                          'artist_name': 'Artist'})[['Track', 'Artist', 'Speechiness']]
-        bot_speechiness = user_all_tracks_with_audio_features.sort_values(by='speechiness', ascending=True).head(5)
-        bot_speechiness = bot_speechiness.rename(columns={'song_name_url': 'Track', 'speechiness': 'Speechiness',
-                                                          'artist_name': 'Artist'})[['Track', 'Artist', 'Speechiness']]
-        top_liveness = user_all_tracks_with_audio_features.sort_values(by='liveness', ascending=False).head(5)
-        top_liveness = top_liveness.rename(columns={'song_name_url': 'Track', 'liveness': 'Liveness',
-                                                    'artist_name': 'Artist'})[['Track', 'Artist', 'Liveness']]
-        bot_liveness = user_all_tracks_with_audio_features.sort_values(by='liveness', ascending=True).head(5)
-        bot_liveness = bot_liveness.rename(columns={'song_name_url': 'Track', 'liveness': 'Liveness',
-                                                    'artist_name': 'Artist'})[['Track', 'Artist', 'Liveness']]
+
 
     related_artists_suggestions = related_artists.loc[~related_artists['external_url'].isin(
         user_top_artists_data_long_term['external_url'].unique())]
@@ -844,7 +844,7 @@ def main():
                 '🎧 My Library (Saved tracks) 🎧'
             ],
                 style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': '22px'}
+                       'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize']}
             ),
 
             html.Div([
@@ -982,7 +982,7 @@ def main():
                                        ' appear here if I had. Maybe I should start take advantage of the'
                                        ' full potential of Spotify.'],
                                       style={'width': '98%', 'textAlign': 'center', 'fontSize': '18px',
-                                             'fontFamily': 'helvetica'})
+                                             'fontFamily': 'helvetica', 'marginTop': '30px'})
 
     layout = html.Div([
 
@@ -1008,8 +1008,8 @@ def main():
                     '🎤 My Top Artists 🎤'
                 ],
                     style={'width': '58%', 'display': 'inline-block', 'float': 'left', 'textAlign': 'center',
-                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': '22px', 'marginTop': '10px',
-                           'marginBottom': '10px'}
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                           'marginTop': '10px', 'marginBottom': '10px'}
                 ),
 
                 html.Div([
@@ -1019,7 +1019,7 @@ def main():
                                                        entity='artist'
                                                        )
                     ],
-                        style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'left', 'marginTop': '8px'}
                     ),
 
                     html.Div([
@@ -1111,8 +1111,8 @@ def main():
                     '🎶 My Top Tracks 🎶'
                 ],
                     style={'width': '40%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
-                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': '22px', 'marginTop': '-40px',
-                           'marginBottom': '10px'}
+                           'fontFamily': 'helvetica', 'fontWeight': 'bold', 'fontSize': css_values['title_fontSize'],
+                           'marginTop': '-35px', 'marginBottom': '10px'}
                 ),
 
                 html.Div([
@@ -1178,33 +1178,8 @@ def main():
                            'marginTop': '30px', 'marginBottom': '0px'}
                 ),
                 html.Div([
-                    "Polar Plots for the 8 audio characteristics of your tracks. The characteristis are the following:",
-                    html.Br(),
-                    html.B('Energy'), ": measure of intencity and activity based on dynamic range, perceived loudness, "
-                                      "timbre, onset rate and general entropy. energetic tracks feel fast, loud and noisy",
-                    html.Br(),
-                    html.B('Valence'), ": musical positiveness conveyed by a track",
-                    html.Br(),
-                    html.B('Loudness'), ": decibels",
-                    html.Br(),
-                    html.B('Danceability'), ": how suitable a track is for dancing based on tempo, rhythm stability, "
-                                            "beat strength and overall regularity.",
-                    html.Br(),
-                    html.B('Acousticness'), ": confidence if the track is acoustic",
-                    html.Br(),
-                    html.B('Instrumentalness'), ": confidence if the track has no vocals",
-                    html.Br(),
-                    html.B('Speechiness'), ": Speechiness detects the presence of spoken words in a track. The more "
-                                           "exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the "
-                                           "attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words. "
-                                           "Values between 0.33 and 0.66 describe tracks that may contain both music and speech, either in "
-                                           "sections or layered, including such cases as rap music. Values below 0.33 most likely represent "
-                                           "music and other non-speech-like tracks",
-                    html.Br(),
-                    html.B('Liveness'), ": confidence if there is audience and so the track is live",
-                    html.Br(),
-                    "On the drowdown select the number of tracks to be displayed in each of the 8 plots.",
-                    html.B('For big numbers you might wait up to 30 seconds for the new plots to be created.'),
+                    "On the drowdown select the number of tracks to be displayed in each of the 8 plots. ",
+                    html.B('For big numbers you might wait up to 30 seconds for the new plots to be created. '),
                     "You can zoom "
                     "in the plot by clicking and dragging. You can play with the artists on the right. You can even "
                     "rotate the plot by putting the mouse right outside of the circle."
@@ -1223,15 +1198,152 @@ def main():
                                                 user_all_tracks_with_audio_features.shape[0] + 1,
                                                 int(user_all_tracks_with_audio_features.shape[0] / 20))],
                                  value=50,
-                                 placeholder="Select the number of tracks to be displayed"),
-                    dcc.Graph(id='scatter_polar_energy'),
-                    dcc.Graph(id='scatter_polar_valence'),
-                    dcc.Graph(id='scatter_polar_loudness'),
-                    dcc.Graph(id='scatter_polar_danceability'),
-                    dcc.Graph(id='scatter_polar_acousticness'),
-                    dcc.Graph(id='scatter_polar_instrumentalness'),
-                    dcc.Graph(id='scatter_polar_speechiness'),
-                    dcc.Graph(id='scatter_polar_liveness'),
+                                 placeholder="Select the number of tracks to be displayed",
+                                 style={'fontSize': '25px', 'marginLeft': '8%',
+                                        'marginRight': '20%', 'marginTop': '40px'}),
+                    html.Div([
+                        'Tracks Distributed by Energy'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "Energy is a measure of intencity and activity based on dynamic range, perceived loudness, "
+                        "timbre, onset rate and general entropy. energetic tracks feel fast, loud and noisy"
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+                    dcc.Graph(id='scatter_polar_energy', style={'marginTop': '100px'}),
+                    html.Div([
+                        'Tracks Distributed by Valence'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "Valence is the musical positiveness conveyed by a track"
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+                    dcc.Graph(id='scatter_polar_valence', style={'marginTop': '100px'}),
+                    html.Div([
+                        'Tracks Distributed by Loudness'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "In decibels"
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+                    dcc.Graph(id='scatter_polar_loudness', style={'marginTop': '100px'}),
+                    html.Div([
+                        'Tracks Distributed by Danceability'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "How suitable a track is for dancing based on tempo, rhythm stability, "
+                        "beat strength and overall regularity"
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+                    dcc.Graph(id='scatter_polar_danceability', style={'marginTop': '100px'}),
+                    html.Div([
+                        'Tracks Distributed by Acousticness'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "Confidence if the track is acoustic"
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+                    dcc.Graph(id='scatter_polar_acousticness', style={'marginTop': '100px'}),
+                    html.Div([
+                        'Tracks Distributed by Instrumentalness'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "Confidence if the track has no vocals"
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+                    dcc.Graph(id='scatter_polar_instrumentalness', style={'marginTop': '100px'}),
+                    html.Div([
+                        'Tracks Distributed by Speechiness'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "Speechiness detects the presence of spoken words in a track. The more exclusively "
+                        "speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the "
+                        "attribute value. Values above 0.66 describe tracks that are probably made entirely of "
+                        "spoken words. Values between 0.33 and 0.66 describe tracks that may contain both music "
+                        "and speech, either in sections or layered, including such cases as rap music. Values below "
+                        "0.33 most likely represent music and other non-speech-like track is live"
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+                    dcc.Graph(id='scatter_polar_speechiness', style={'marginTop': '100px'}),
+                    html.Div([
+                        'Tracks Distributed by Liveness'
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontWeight': 'bold',
+                               'fontSize': css_values['title_fontSize'],
+                               'marginTop': '30px', 'marginBottom': '0px'}
+                    ),
+                    html.Div([
+                        "Confidence if there is audience and so the track is live"
+                    ],
+                        style={'width': '100%', 'display': 'inline-block', 'float': 'right', 'textAlign': 'center',
+                               'fontFamily': 'helvetica', 'fontSize': css_values['description_fontSize'],
+                               'marginTop': '0px',
+                               'marginBottom': '0px'}
+                    ),
+                    dcc.Graph(id='scatter_polar_liveness', style={'marginTop': '100px'}),
                 ],
                     style={'width': '100%', 'display': 'inline-block', 'float': 'left'}
                 ),
