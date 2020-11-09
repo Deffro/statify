@@ -1,5 +1,7 @@
 # Statify
 
+![Statify-Demo](demo.gif)
+
 ## Technologies/Concepts used
 - API
 - Object Oriented Programming
@@ -12,11 +14,11 @@
 - Html, Css
 
 ## How to run
-- Create an app in [spotify](https://developer.spotify.com/dashboard/applications) and generate your client id and client secret.
+- Create an app in [spotify](https://developer.spotify.com/dashboard/applications) and generate your client id and client secret
 - Copy and paste them in server.py
 - Run ngrok.exe and type ngrok http 8080
 - Copy and paste the ngrok url in CLIENT_SIDE_URL in server.py
-- Visit again your spotify app, go to settings and under Redirect URIs paste the ngrok url
+- Visit again your spotify app, go to settings and under Redirect URIs paste the ngrok url. Also add "http://127.0.0.1:8080/" there. Don't forget to save
 - From terminal run: python server.py
 - In a browser visit the ngrok url
 
