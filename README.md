@@ -1,5 +1,7 @@
 # Statify
 
+![Statify-Demo](demo.gif)
+
 ## Technologies/Concepts used
 - API
 - Object Oriented Programming
