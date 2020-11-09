@@ -14,7 +14,7 @@
 - Html, Css
 
 ## How to run
-- Create an app in [spotify](https://developer.spotify.com/dashboard/applications) and generate your client id and client secret.
+- Create an app in [spotify](https://developer.spotify.com/dashboard/applications) and generate your client id and client secret
 - Copy and paste them in server.py
 - Run ngrok.exe and type ngrok http 8080
 - Copy and paste the ngrok url in CLIENT_SIDE_URL in server.py
