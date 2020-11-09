@@ -18,8 +18,8 @@ server = Flask(__name__)
 server.secret_key = 'effro'
 
 #  Client Keys
-CLIENT_ID = '2490920ce5574a1a9b97a3e366c39dd3'
-CLIENT_SECRET = 'bfb4c438f0e742e3ab325f98a4b3b9dc'
+CLIENT_ID = 'your_client_id'
+CLIENT_SECRET = 'your_client_secret'
 
 # Spotify URLS
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
@@ -29,9 +29,12 @@ API_VERSION = "v1"
 SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
 
 # Server-side Parameters
-CLIENT_SIDE_URL = "http://85d525d878db.ngrok.io"  # "http://127.0.0.1"
+CLIENT_SIDE_URL = "your_ngrok_url"  # "http://127.0.0.1"
 PORT = 8080
 REDIRECT_URI = "{}/callback/q".format(CLIENT_SIDE_URL)
+# Uncomment the below two lines to open the app in localhost instead of ngrok
+# CLIENT_SIDE_URL = "http://127.0.0.1"
+# REDIRECT_URI = "{}:{}/callback/q".format(CLIENT_SIDE_URL)
 SCOPE = "user-top-read user-follow-modify user-library-read playlist-read-private " \
         "playlist-read-collaborative user-follow-read user-library-modify"
 STATE = ""
