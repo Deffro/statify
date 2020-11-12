@@ -1,7 +1,7 @@
 # Statify
 An app where anyone can join with spotify credentials and see a lot of cool statistics about his/her profile.
 
-### [Visit the App](http://5d4a6818027f.ngrok.io/)
+### <a href="http://5d4a6818027f.ngrok.io/" target="_blank">Visit the App</a>
 
 ![Statify-Demo](demo.gif)
 
