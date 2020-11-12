@@ -2,6 +2,7 @@
 An app where anyone can join with spotify credentials and see a lot of cool statistics about his/her profile.
 
 ### <a href="http://5d4a6818027f.ngrok.io/" target="_blank">Visit the App</a>
+(if the message "error loading dependencies" appears, it is a known bug and just refresh the page)
 
 ![Statify-Demo](demo.gif)
 
