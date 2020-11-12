@@ -1,10 +1,12 @@
 # Statify
 An app where anyone can join with spotify credentials and see a lot of cool statistics about his/her profile.
 
+### [Visit the App](http://5d4a6818027f.ngrok.io/)
+
 ![Statify-Demo](demo.gif)
 
 ## Technologies/Concepts used
-- API
+- Spotify API
 - Object Oriented Programming
 - Git, GitHub
 - PEP8 notation
@@ -14,7 +16,7 @@ An app where anyone can join with spotify credentials and see a lot of cool stat
 - Ngrok
 - Html, Css
 
-## How to run
+## How to run it by yourself
 - Create an app in [spotify](https://developer.spotify.com/dashboard/applications) and generate your client id and client secret
 - Copy and paste them in server.py
 - Run ngrok.exe and type ngrok http 8080
