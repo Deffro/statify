@@ -1,7 +1,7 @@
 # Statify
 An app where anyone can join with spotify credentials and see a lot of cool statistics about his/her profile.
 
-## <a href="http://26914d6flcab.ngrok.io/" target="_blank">Click Here to Visit the App</a>
+## <a href="http://58277d9962ec.ngrok.io/" target="_blank">Click Here to Visit the App</a>
 (if the message "error loading dependencies" appears, it is a known bug and just refresh the page)
 
 ![Statify-Demo](demo.gif)
