@@ -10,7 +10,6 @@ import pandas as pd
 import numpy as np
 import ast
 import dash_table
-# from server2 import app
 from flask import Flask, request, redirect, render_template, url_for, session
 
 css_values = {
@@ -1650,10 +1649,3 @@ def main():
     ])
 
     return layout
-
-
-if __name__ == '__main__':
-    # if the script is run standalone then the user_id is the last user that authorized. His file must exist.
-    app = dash.Dash(name='app', url_base_pathname='/app/')
-    app.layout = main()
-    app.run_server(debug=True, port=8080)
