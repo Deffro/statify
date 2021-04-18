@@ -3,6 +3,8 @@ An app where anyone can join with spotify credentials and see a lot of cool stat
 
 Before visiting the app, you might want to check the Known Bugs section at the end of the page.
 
+Since the app uses a lot of requests, does a lot of processing and creates many visualizations, it can take up to 20 seconds to load.
+
 ## <a href="https://statify-deffro.herokuapp.com/" target="_blank">Click Here to Visit the App</a>
 (if the message "error loading dependencies" appears, it is a known bug and just refresh the page)
 
