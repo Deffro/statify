@@ -641,8 +641,8 @@ def run_dash(app):
 SpotifyAPI.register(server, route_base='/')
 
 app = dash.Dash(name='app', server=server, url_base_pathname='/app/')
-app.layout = html.Div(['The URL should not contain the "/app/".'])
+app.layout = html.Div(['Your Spotify statistics were computed and are ready. Due to a random error you need to REFRESH the page (probably several times) to see them'])
 init_callbacks(app)
 
 if __name__ == '__main__':
-    server.run(debug=True, port=PORT)
+    server.run(threaded=True, port=PORT)
