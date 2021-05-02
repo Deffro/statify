@@ -19,7 +19,8 @@ Since the app uses a lot of requests, does a lot of processing and creates many 
 - Plotly and Dash
 - Flask
 - Ngrok
-- Html, Css
+- HTML, CSS
+- Heroku
 
 ## How to run it by yourself
 - Create an app in [spotify](https://developer.spotify.com/dashboard/applications) and generate your client id and client secret
