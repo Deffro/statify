@@ -8,6 +8,8 @@ Since the app uses a lot of requests, does a lot of processing and creates many 
 ## <a href="https://statify-deffro.herokuapp.com/" target="_blank">Click Here to Visit the App</a>
 (if the message "error loading dependencies" appears, it is a known bug and just refresh the page)
 
+### Check the blog post on [Towards Data Science](https://towardsdatascience.com/creating-statify-an-app-for-your-spotify-statistics-and-what-i-learned-from-it-289b680d0b29)
+
 ![Statify-Demo](demo.gif)
 
 ## Technologies/Concepts used
